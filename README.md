@@ -1,8 +1,8 @@
-# VSCode ESLint
+# VSCode StandardJS
 
 [![Build Status](https://travis-ci.org/Microsoft/vscode-eslint.svg?branch=master)](https://travis-ci.org/Microsoft/vscode-eslint)
 
-Extension to integrate [ESLint](http://eslint.org/) into VSCode.
+Extension to integrate [JavaScript Standard Style](http://standardjs.com/) into VSCode.
 
 ## Development setup
 - run npm install inside the `eslint` and `eslint-server` folders

@@ -32,17 +32,17 @@ namespace Is {
 }
 
 namespace CommandIds {
-	export const applySingleFix: string = 'eslint.applySingleFix';
-	export const applySameFixes: string = 'eslint.applySameFixes';
-	export const applyAllFixes: string = 'eslint.applyAllFixes';
-	export const applyAutoFix: string = 'eslint.applyAutoFix';
+	export const applySingleFix: string = 'standard.applySingleFix';
+	export const applySameFixes: string = 'standard.applySameFixes';
+	export const applyAllFixes: string = 'standard.applyAllFixes';
+	export const applyAutoFix: string = 'standard.applyAutoFix';
 }
 
 interface Map<V> {
 	[key: string]: V;
 }
 
-interface ESLintError extends Error {
+interface StandardError extends Error {
 	messageTemplate?: string;
 	messageData?: {
 		pluginName?: string;
@@ -60,7 +60,7 @@ interface StatusParams {
 }
 
 namespace StatusNotification {
-	export const type = new NotificationType<StatusParams, void>('eslint/status');
+	export const type = new NotificationType<StatusParams, void>('standard/status');
 }
 
 interface NoConfigParams {
@@ -72,18 +72,18 @@ interface NoConfigResult {
 }
 
 namespace NoConfigRequest {
-	export const type = new RequestType<NoConfigParams, NoConfigResult, void, void>('eslint/noConfig');
+	export const type = new RequestType<NoConfigParams, NoConfigResult, void, void>('standard/noConfig');
 }
 
-interface NoESLintLibraryParams {
+interface NoStandardLibraryParams {
 	source: TextDocumentIdentifier;
 }
 
-interface NoESLintLibraryResult {
+interface NoStandardLibraryResult {
 }
 
-namespace NoESLintLibraryRequest {
-	export const type = new RequestType<NoESLintLibraryParams, NoESLintLibraryResult, void, void>('eslint/noLibrary');
+namespace NoStandardLibraryRequest {
+	export const type = new RequestType<NoStandardLibraryParams, NoStandardLibraryResult, void, void>('standard/noLibrary');
 }
 
 class ID {
@@ -121,7 +121,7 @@ namespace DirectoryItem {
 }
 
 interface Settings {
-	eslint: {
+	standard: {
 		enable?: boolean;
 		autoFixOnSave?: boolean;
 		options?: any;
@@ -164,19 +164,19 @@ interface ESLintReport {
 
 interface CLIOptions {
 	cwd: string;
+	fix: boolean;
+	ignore: string[];
+	globals: string[];
+	plugins: string[];
+	envs: string[];
+	parser: string;
 }
 
-interface CLIEngine {
-	executeOnText(content: string, file?:string): ESLintReport;
+interface ESLintModuleCallback {
+	(error: Object, results: ESLintReport): void;
 }
-
-interface CLIEngineConstructor {
-	new (options: CLIOptions): CLIEngine;
-}
-
-
 interface ESLintModule {
-	CLIEngine: CLIEngineConstructor;
+	lintText(text: string, opts?: CLIOptions, cb?: ESLintModuleCallback): void;
 }
 
 function makeDiagnostic(problem: ESLintProblem): Diagnostic {
@@ -190,7 +190,7 @@ function makeDiagnostic(problem: ESLintProblem): Diagnostic {
 	return {
 		message: message,
 		severity: convertSeverity(problem.severity),
-		source: 'eslint',
+		source: 'standard',
 		range: {
 			start: { line: startLine, character: startChar },
 			end: { line: endLine, character: endChar }
@@ -299,7 +299,7 @@ function getFilePath(documentOrUri: string | TextDocument): string {
 	return uri.fsPath;
 }
 
-const exitCalled = new NotificationType<[number, string], void>('eslint/exitCalled');
+const exitCalled = new NotificationType<[number, string], void>('standard/exitCalled');
 
 const nodeExit = process.exit;
 process.exit = (code?: number) => {
@@ -346,39 +346,39 @@ documents.onDidOpen((event) => {
 			let file = uri.fsPath;
 			let directory = path.dirname(file);
 			if (nodePath) {
-				 promise = Files.resolve('eslint', nodePath, nodePath, trace).then<string>(undefined, () => {
-					 return Files.resolve('eslint', globalNodePath, directory, trace);
+				 promise = Files.resolve('standard', nodePath, nodePath, trace).then<string>(undefined, () => {
+					 return Files.resolve('standard', globalNodePath, directory, trace);
 				 });
 			} else {
-				promise = Files.resolve('eslint', globalNodePath, directory, trace);
+				promise = Files.resolve('standard', globalNodePath, directory, trace);
 			}
 		} else {
-			promise = Files.resolve('eslint', globalNodePath, workspaceRoot, trace);
+			promise = Files.resolve('standard', globalNodePath, workspaceRoot, trace);
 		}
 		document2Library[event.document.uri] = promise.then((path) => {
 			let library = path2Library[path];
 			if (!library) {
 				library = require(path);
-				if (!library.CLIEngine) {
-					throw new Error(`The eslint library doesn\'t export a CLIEngine. You need at least eslint@1.0.0`);
+				if (!library.lintText) {
+					throw new Error(`The standard library doesn\'t export a lintText.`);
 				}
-				connection.console.info(`ESLint library loaded from: ${path}`);
+				connection.console.info(`standard library loaded from: ${path}`);
 				path2Library[path] = library;
 			}
 			return library;
 		}, () => {
-			connection.sendRequest(NoESLintLibraryRequest.type, { source: { uri: event.document.uri } });
+			connection.sendRequest(NoStandardLibraryRequest.type, { source: { uri: event.document.uri } });
 			return null;
 		});
 	}
-	if (settings.eslint.run === 'onSave') {
+	if (settings.standard.run === 'onSave') {
 		validateSingle(event.document);
 	}
 });
 
 // A text document has changed. Validate the document according the run setting.
 documents.onDidChangeContent((event) => {
-	if (settings.eslint.run !== 'onType' || ignoreTextDocument(event.document)) {
+	if (settings.standard.run !== 'onType' || ignoreTextDocument(event.document)) {
 		return;
 	}
 	validateSingle(event.document);
@@ -409,7 +409,7 @@ documents.onWillSaveWaitUntil((event) => {
 
 	// If we validate on save and want to apply fixes on will save
 	// we need to validate the file.
-	if (settings.eslint.run === 'onSave') {
+	if (settings.standard.run === 'onSave') {
 		return validateSingle(document, false).then(() => getFixes(document));
 	} else {
 		return getFixes(document);
@@ -420,7 +420,7 @@ documents.onWillSaveWaitUntil((event) => {
 documents.onDidSave((event) => {
 	// We even validate onSave if we have validated on will save to compute fixes since the
 	// fixes will change the content of the document.
-	if (settings.eslint.run !== 'onSave' || ignoreTextDocument(event.document)) {
+	if (settings.standard.run !== 'onSave' || ignoreTextDocument(event.document)) {
 		return;
 	}
 	validateSingle(event.document);
@@ -458,11 +458,11 @@ connection.onInitialize((params): Thenable<InitializeResult | ResponseError<Init
 
 connection.onDidChangeConfiguration((params) => {
 	settings = params.settings || {};
-	settings.eslint = settings.eslint || {};
-	options = settings.eslint.options || {};
-	if (Array.isArray(settings.eslint.workingDirectories)) {
+	settings.standard = settings.standard || {};
+	options = settings.standard.options || {};
+	if (Array.isArray(settings.standard.workingDirectories)) {
 		workingDirectories = [];
-		for (let entry of settings.eslint.workingDirectories) {
+		for (let entry of settings.standard.workingDirectories) {
 			let directory: string;
 			let changeProcessCWD = false;
 			if  (Is.string(entry)) {
@@ -491,8 +491,8 @@ connection.onDidChangeConfiguration((params) => {
 
 	let toValidate: string[] = [];
 	let toSupportAutoFix = new Set<string>();
-	if (settings.eslint.validate) {
-		for (const item of settings.eslint.validate) {
+	if (settings.standard.validate) {
+		for (const item of settings.standard.validate) {
 			if (Is.string(item)) {
 				toValidate.push(item);
 				if (item === 'javascript' || item === 'javascriptreact') {
@@ -507,7 +507,7 @@ connection.onDidChangeConfiguration((params) => {
 		}
 	}
 
-	if (settings.eslint.autoFixOnSave && !willSaveRegistered) {
+	if (settings.standard.autoFixOnSave && !willSaveRegistered) {
 		Object.keys(supportedLanguages).forEach(languageId => {
 			if (!toSupportAutoFix.has(languageId)) {
 				return;
@@ -519,7 +519,7 @@ connection.onDidChangeConfiguration((params) => {
 			});
 		});
 		willSaveRegistered = true;
-	} else if (!settings.eslint.autoFixOnSave && willSaveRegistered) {
+	} else if (!settings.standard.autoFixOnSave && willSaveRegistered) {
 		Object.keys(supportedLanguages).forEach(languageId => {
 			if (!supportedAutoFixLanguages.has(languageId)) {
 				return;
@@ -576,7 +576,7 @@ connection.onDidChangeConfiguration((params) => {
 		registration.add(DidOpenTextDocumentNotification.type, documentOptions);
 		let didChangeOptions: TextDocumentChangeRegistrationOptions = { documentSelector: [languageId], syncKind: TextDocumentSyncKind.Full };
 		registration.add(DidChangeTextDocumentNotification.type, didChangeOptions);
-		if (settings.eslint.autoFixOnSave && supportedAutoFixLanguages.has(languageId)) {
+		if (settings.standard.autoFixOnSave && supportedAutoFixLanguages.has(languageId)) {
 			registration.add(WillSaveTextDocumentWaitUntilRequest.type, documentOptions);
 		}
 		registration.add(DidSaveTextDocumentNotification.type, documentOptions);
@@ -627,7 +627,7 @@ function getMessage(err: any, document: TextDocument): string {
 }
 
 function validate(document: TextDocument, library: ESLintModule, publishDiagnostics: boolean = true): void {
-	let newOptions: CLIOptions = Object.assign(Object.create(null), options);
+	let newOptions: CLIOptions = Object.assign(Object.create(null), {filename: document.uri}, options);
 	let content = document.getText();
 	let uri = document.uri;
 	let file = getFilePath(document);
@@ -654,28 +654,31 @@ function validate(document: TextDocument, library: ESLintModule, publishDiagnost
 			}
 		}
 
-		let cli = new library.CLIEngine(newOptions);
 		// Clean previously computed code actions.
 		delete codeActions[uri];
-		let report: ESLintReport = cli.executeOnText(content, file);
-		let diagnostics: Diagnostic[] = [];
-		if (report && report.results && Array.isArray(report.results) && report.results.length > 0) {
-			let docReport = report.results[0];
-			if (docReport.messages && Array.isArray(docReport.messages)) {
-				docReport.messages.forEach((problem) => {
-					if (problem) {
-						let diagnostic = makeDiagnostic(problem);
-						diagnostics.push(diagnostic);
-						if (supportedAutoFixLanguages.has(document.languageId)) {
-							recordCodeAction(document, diagnostic, problem);
-						}
-					}
-				});
+		library.lintText(content, newOptions, function (error, report: ESLintReport): void {
+			if (error) {
+				// ?? what to do here?
 			}
-		}
-		if (publishDiagnostics) {
-			connection.sendDiagnostics({ uri, diagnostics });
-		}
+			let diagnostics: Diagnostic[] = [];
+			if (report && report.results && Array.isArray(report.results) && report.results.length > 0) {
+				let docReport = report.results[0];
+				if (docReport.messages && Array.isArray(docReport.messages)) {
+					docReport.messages.forEach((problem) => {
+						if (problem) {
+							let diagnostic = makeDiagnostic(problem);
+							diagnostics.push(diagnostic);
+							if (supportedAutoFixLanguages.has(document.languageId)) {
+								recordCodeAction(document, diagnostic, problem);
+							}
+						}
+					});
+				}
+			}
+			if (publishDiagnostics) {
+				connection.sendDiagnostics({ uri, diagnostics });
+			}
+		})
 	} finally {
 		if (cwd !== process.cwd()) {
 			process.chdir(cwd);
@@ -686,7 +689,7 @@ function validate(document: TextDocument, library: ESLintModule, publishDiagnost
 let noConfigReported: Map<ESLintModule> = Object.create(null);
 
 function isNoConfigFoundError(error: any): boolean {
-	let candidate = error as ESLintError;
+	let candidate = error as StandardError;
 	return candidate.messageTemplate === 'no-config-found' || candidate.message === 'No ESLint configuration found.';
 }
 
@@ -752,7 +755,7 @@ function tryHandleMissingModule(error: any, document: TextDocument, library: ESL
 		return undefined;
 	}
 
-	function handleMissingModule(plugin: string, module: string, error: ESLintError): Status {
+	function handleMissingModule(plugin: string, module: string, error: StandardError): Status {
 		if (!missingModuleReported[plugin]) {
 			let fsPath = getFilePath(document);
 			missingModuleReported[plugin] = library;
@@ -881,9 +884,8 @@ connection.onDidChangeWatchedFiles((params) => {
 		if (dirname) {
 			let library = configErrorReported[fsPath];
 			if (library) {
-				let cli = new library.CLIEngine(options);
 				try {
-					cli.executeOnText("", path.join(dirname, "___test___.js"));
+					library.lintText("", options);
 					delete configErrorReported[fsPath];
 				} catch (error) {
 				}

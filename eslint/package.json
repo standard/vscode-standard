@@ -1,19 +1,19 @@
 {
-  "name": "vscode-eslint",
-  "displayName": "ESLint",
-  "description": "Integrates ESLint into VS Code.",
-  "version": "1.2.6",
-  "author": "Microsoft Corporation",
+  "name": "vscode-standardjs",
+  "displayName": "JavaScript Standard Style",
+  "description": "Integrates JavaScript Standard Style into VS Code.",
+  "version": "1.0.0",
+  "author": "Sam Chen",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Microsoft/vscode-eslint.git"
+    "url": "https://github.com/chenxsan/vscode-standardjs.git"
   },
   "bugs": {
-    "url": "https://github.com/Microsoft/vscode-eslint/issues"
+    "url": "https://github.com/chenxsan/vscode-standardjs/issues"
   },
-  "publisher": "dbaeumer",
-  "icon": "eslint_icon.svg",
+  "publisher": "chenxsan",
+  "icon": "standard_icon.svg",
   "categories": [
     "Linters"
   ],
@@ -27,29 +27,29 @@
   "contributes": {
     "configuration": {
       "type": "object",
-      "title": "ESLint",
+      "title": "JavaScript Standard Style configuration",
       "properties": {
-        "eslint.enable": {
+        "standard.enable": {
           "type": "boolean",
           "default": true,
-          "description": "Controls whether eslint is enabled for JavaScript files or not."
+          "description": "Controls whether JavaScript Standard Style is enabled for JavaScript files or not."
         },
-        "eslint.nodePath": {
+        "standard.nodePath": {
           "type": ["string", "null"],
           "default": null,
-          "description": "A path added to NODE_PATH when resolving the eslint module."
+          "description": "A path added to NODE_PATH when resolving the standard module."
         },
-        "eslint._legacyModuleResolve": {
+        "standard._legacyModuleResolve": {
           "type": "boolean",
           "default": false,
           "description": "Uses the legacy module resolving."
         },
-        "eslint.options": {
+        "standard.options": {
           "type": "object",
           "default": {},
-          "description": "The eslint options object to provide args normally passed to eslint when executed from a command line (see http://eslint.org/docs/developer-guide/nodejs-api#cliengine)."
+          "description": "The JavaScript Standard Style options object to provide args normally passed to JavaScript Standard Style when executed from a command line."
         },
-        "eslint.trace.server": {
+        "standard.trace.server": {
           "type": "string",
           "enum": [
             "off",
@@ -57,9 +57,9 @@
             "verbose"
           ],
           "default": "off",
-          "description": "Traces the communication between VSCode and the eslint linter service."
+          "description": "Traces the communication between VSCode and the JavaScript Standard Style linter service."
         },
-        "eslint.run": {
+        "standard.run": {
           "type": "string",
           "enum": [
             "onSave",
@@ -68,12 +68,12 @@
           "default": "onType",
           "description": "Run the linter on save (onSave) or on type (onType)"
         },
-        "eslint.autoFixOnSave": {
+        "standard.autoFixOnSave": {
           "type": "boolean",
           "default": false,
           "description": "Turns auto fix on save on or off."
         },
-        "eslint.workingDirectories": {
+        "standard.workingDirectories": {
           "type": "array",
           "items": {
             "anyOf": [
@@ -96,7 +96,7 @@
             ]
           }
         },
-        "eslint.validate": {
+        "standard.validate": {
           "type": "array",
           "items": {
               "anyOf": [
@@ -108,7 +108,7 @@
                   "properties": {
                     "language": {
                       "type": "string",
-                      "description": "The language id to be validated by ESLint"
+                      "description": "The language id to be validated by JavaScript Standard Style"
                     },
                     "autoFix": {
                       "type": "boolean",
@@ -119,46 +119,33 @@
               ]
           },
           "default": ["javascript", "javascriptreact"],
-          "description": "An array of language ids which should be validated by ESLint"
+          "description": "An array of language ids which should be validated by JavaScript Standard Style"
         }
       }
     },
     "commands": [
       {
         "title": "Fix all auto-fixable Problems",
-        "category": "ESLint",
-        "command": "eslint.executeAutofix"
+        "category": "JavaScript Standard Style",
+        "command": "standard.executeAutofix"
       },
       {
-        "title": "Create '.eslintrc.json' File",
-        "category": "ESLint",
-        "command": "eslint.createConfig"
+        "title": "Enable JavaScript Standard Style for this Workspace",
+        "category": "JavaScript Standard Style",
+        "command": "standard.enable"
       },
       {
-        "title": "Enable ESLint for this Workspace",
-        "category": "ESLint",
-        "command": "eslint.enable"
-      },
-      {
-        "title": "Disable ESLint for this Workspace",
-        "category": "ESLint",
-        "command": "eslint.disable"
+        "title": "Disable JavaScript Standard Style for this Workspace",
+        "category": "JavaScript Standard Style",
+        "command": "standard.disable"
       },
       {
         "title": "Show Output Channel",
-        "category": "ESLint",
-        "command": "eslint.showOutputChannel"
+        "category": "JavaScript Standard Style",
+        "command": "standard.showOutputChannel"
       }
     ],
     "jsonValidation": [
-      {
-        "fileMatch": ".eslintrc",
-        "url": "http://json.schemastore.org/eslintrc"
-      },
-      {
-        "fileMatch": ".eslintrc.json",
-        "url": "http://json.schemastore.org/eslintrc"
-      }
     ]
   },
   "scripts": {
