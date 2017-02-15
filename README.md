@@ -5,7 +5,7 @@
 Extension to integrate [JavaScript Standard Style](http://standardjs.com/) into VSCode.
 
 ## Development setup
-- run npm install inside the `eslint` and `eslint-server` folders
+- run `npm install` inside the `eslint` and `eslint-server` folders
 - open VS Code on `eslint` and `eslint-server`
 
 ## Developing the server
