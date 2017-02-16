@@ -163,7 +163,7 @@ export function realActivate(context: ExtensionContext) {
 				statusBarItem.color = 'yellow';
 				break;
 			case Status.error:
-				statusBarItem.color = 'darkred';
+				statusBarItem.color = '#aaa';
 				break;
 		}
 		standardStatus = status;
@@ -255,17 +255,18 @@ export function realActivate(context: ExtensionContext) {
 			updateStatus(params.state);
 		});
 
-	client.onNotification(StatusNotification.type, (params) => {
-		updateStatus(params.state);
-	});
+		client.onNotification(StatusNotification.type, (params) => {
+			updateStatus(params.state);
+		});
 
-	defaultErrorHandler = client.createDefaultErrorHandler();
-	client.onNotification(exitCalled, (params) => {
-		serverCalledProcessExit = true;
-		client.error(`Server process exited with code ${params[0]}. This usually indicates a misconfigured JavaScript Standard Style setup.`, params[1]);
-		window.showErrorMessage(`JavaScript Standard Style server shut down itself. See 'JavaScript Standard Style' output channel for details.`);
-	});
+		defaultErrorHandler = client.createDefaultErrorHandler();
+		client.onNotification(exitCalled, (params) => {
+			serverCalledProcessExit = true;
+			client.error(`Server process exited with code ${params[0]}. This usually indicates a misconfigured JavaScript Standard Style setup.`, params[1]);
+			window.showErrorMessage(`JavaScript Standard Style server shut down itself. See 'JavaScript Standard Style' output channel for details.`);
+		});
 
+		// when server reports that no `standard` library installed neither locally or globally
 		client.onRequest(NoStandardLibraryRequest.type, (params) => {
 			const key = 'noStandardMessageShown';
 			let state = context.globalState.get<NoStandardState>(key, {});
@@ -273,13 +274,14 @@ export function realActivate(context: ExtensionContext) {
 			if (workspace.rootPath) {
 				client.info([
 					'',
-					`Failed to load the Standard library for the document ${uri.fsPath}`,
+					`Failed to load the JavaScript Standard Style library for the document '${uri.fsPath}'.`,
 					'',
-					'To use Standard in this workspace please install standard using \'npm install standard\' or globally using \'npm install -g standard\'.',
+					'To use JavaScript Standard Style in this workspace please install standard using \'npm install standard\' or globally using \'npm install -g standard\'.',
 					'You need to reopen the workspace after installing standard.',
 					'',
-					`Alternatively you can disable Standard for this workspace by executing the 'Disable Standard for this workspace' command.`
+					`Alternatively you can disable JavaScript Standard Style for this workspace by executing the 'Disable JavaScript Standard Style for this workspace' command.`
 				].join('\n'));
+
 				if (!state.workspaces) {
 					state.workspaces = Object.create(null);
 				}
@@ -290,8 +292,8 @@ export function realActivate(context: ExtensionContext) {
 				}
 			} else {
 				client.info([
-					`Failed to load the Standard library for the document ${uri.fsPath}`,
-					'To use Standard for single JavaScript file install standard globally using \'npm install -g standard\'.',
+					`Failed to load the JavaScript Standard Style library for the document '${uri.fsPath}'.`,
+					'To use JavaScript Standard Style for single JavaScript file install standard globally using \'npm install -g standard\'.',
 					'You need to reopen VS Code after installing standard.',
 				].join('\n'));
 				if (!state.global) {
@@ -300,6 +302,8 @@ export function realActivate(context: ExtensionContext) {
 					context.globalState.update(key, state);
 				}
 			}
+			// update status bar
+			updateStatus(3)
 			return {};
 		});
 	});
@@ -324,7 +328,7 @@ export function realActivate(context: ExtensionContext) {
 				arguments: [textDocument]
 			}
 			client.sendRequest(ExecuteCommandRequest.type, params).then(undefined, () => {
-				window.showErrorMessage('Failed to apply Standard fixes to the document. Please consider opening an issue with steps to reproduce.');
+				window.showErrorMessage('Failed to apply JavaScript Standard Style fixes to the document. Please consider opening an issue with steps to reproduce.');
 			});
 		}),
 		commands.registerCommand('standard.showOutputChannel', () => { client.outputChannel.show(); }),

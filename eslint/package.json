@@ -35,7 +35,10 @@
           "description": "Controls whether JavaScript Standard Style is enabled for JavaScript files or not."
         },
         "standard.nodePath": {
-          "type": ["string", "null"],
+          "type": [
+            "string",
+            "null"
+          ],
           "default": null,
           "description": "A path added to NODE_PATH when resolving the standard module."
         },
@@ -99,26 +102,29 @@
         "standard.validate": {
           "type": "array",
           "items": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "language": {
-                      "type": "string",
-                      "description": "The language id to be validated by JavaScript Standard Style"
-                    },
-                    "autoFix": {
-                      "type": "boolean",
-                      "description": "Whether auto fixes are provided for the language"
-                    }
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "language": {
+                    "type": "string",
+                    "description": "The language id to be validated by JavaScript Standard Style"
+                  },
+                  "autoFix": {
+                    "type": "boolean",
+                    "description": "Whether auto fixes are provided for the language"
                   }
                 }
-              ]
+              }
+            ]
           },
-          "default": ["javascript", "javascriptreact"],
+          "default": [
+            "javascript",
+            "javascriptreact"
+          ],
           "description": "An array of language ids which should be validated by JavaScript Standard Style"
         }
       }
@@ -145,8 +151,7 @@
         "command": "standard.showOutputChannel"
       }
     ],
-    "jsonValidation": [
-    ]
+    "jsonValidation": []
   },
   "scripts": {
     "vscode:prepublish": "npm run update-vscode && cd ../eslint-server && npm run compile && cd ../eslint && npm run compile",
