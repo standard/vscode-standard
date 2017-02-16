@@ -26,8 +26,26 @@ You can add those options to [`settings.json`](https://code.visualstudio.com/doc
 		"parser": "babel-eslint"
 	}
 	```
+
 ### Commands
 
 * `Fix all auto-fixable problems` - applies JavaScript Standard Style auto-fix resolutions to all fixable problems.
 * `Disable JavaScript Standard Style for this Workspace` - disables JavaScript Standard Style extension for this workspace.
 * `Enable JavaScript Standard Style for this Workspace` - enable JavaScript Standard Style extension for this workspace.
+
+### FAQ
+
+1. How to lint `script` tag in vue or html files?
+
+    You have to install `eslint-plugin-html` first, then enable the lint for those file types in `settings.json` with:
+
+	```json
+	"standard.validate": [
+		"javascript",
+		"javascriptreact",
+		"html"
+	],
+	"standard.options": {
+		"plugins": ["html"]
+	}
+	```
