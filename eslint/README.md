@@ -4,6 +4,8 @@ VSCode extension to integrate [JavaScript Standard Style](https://github.com/fer
 
 ## How to use
 
+You shall set `"javascript.validate.enable": false` in VSCode `settings.json` to disable VSCode built-in validator first.
+
 ### Options
 
 You can add those options to [`settings.json`](https://code.visualstudio.com/docs/customization/userandworkspace).
