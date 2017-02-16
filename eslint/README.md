@@ -51,3 +51,15 @@ You can add those options to [`settings.json`](https://code.visualstudio.com/doc
 		"plugins": ["html"]
 	}
 	```
+	If you want to enable `autoFix` for the new languages, you should enable it yourself:
+
+	```json
+	"standard.validate": [
+		"javascript",
+		"javascriptreact",
+		{ "language": "html", "autoFix": true }
+	],
+	"standard.options": {
+		"plugins": ["html"]
+	}
+	```
