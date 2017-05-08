@@ -656,9 +656,10 @@ function validate(document: TextDocument, library: ESLintModule, publishDiagnost
 
 		// Clean previously computed code actions.
 		delete codeActions[uri];
-		library.lintText(content, newOptions, function (error, report: ESLintReport): void {
+		library.lintText(content, newOptions, function (error: StandardError, report: ESLintReport): void {
 			if (error) {
-				// ?? what to do here?
+				connection.window.showErrorMessage(error.message)
+				return connection.sendNotification(StatusNotification.type, { state: Status.error });
 			}
 			let diagnostics: Diagnostic[] = [];
 			if (report && report.results && Array.isArray(report.results) && report.results.length > 0) {
