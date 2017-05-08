@@ -1,2 +1,3 @@
-- [ ] StandardJS version?
-- [ ] VSCode version?
+- StandardJS version?
+- VSCode version?
+- StandardJS configuration?
