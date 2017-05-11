@@ -213,7 +213,7 @@ export function realActivate(context: ExtensionContext) {
 			return {
 				legacyModuleResolve: configuration ? configuration.get('_legacyModuleResolve', false) : false,
 				nodePath: configuration ? configuration.get('nodePath', undefined) : undefined,
-				languageIds: configuration ? configuration.get('valiadate', languages) : languages
+				languageIds: configuration ? configuration.get('validate', languages) : languages
 			};
 		},
 		initializationFailedHandler: (error) => {
