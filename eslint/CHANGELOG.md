@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1.2
+
+1. Fix typo
+
 ## 1.1.1
 
 1. Warn user the reason when StandardJS failed to lint
