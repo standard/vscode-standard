@@ -126,6 +126,7 @@ interface Settings {
 		autoFixOnSave?: boolean;
 		options?: any;
 		run?: RunValues;
+		semistandard?: boolean;
 		validate?: (string | ValidateItem)[];
 		workingDirectories?: (string | DirectoryItem)[];
 	}
@@ -190,7 +191,7 @@ function makeDiagnostic(problem: ESLintProblem): Diagnostic {
 	return {
 		message: message,
 		severity: convertSeverity(problem.severity),
-		source: 'standard',
+		source: settings.standard.semistandard ? 'semistandard' : 'standard',
 		range: {
 			start: { line: startLine, character: startChar },
 			end: { line: endLine, character: endChar }
@@ -338,7 +339,7 @@ documents.onDidOpen((event) => {
 	if (!supportedLanguages[event.document.languageId]) {
 		return;
 	}
-
+	const style = settings.standard.semistandard ? 'semistandard' : 'standard';
 	if (!document2Library[event.document.uri]) {
 		let uri = Uri.parse(event.document.uri);
 		let promise: Thenable<string>
@@ -346,23 +347,23 @@ documents.onDidOpen((event) => {
 			let file = uri.fsPath;
 			let directory = path.dirname(file);
 			if (nodePath) {
-				 promise = Files.resolve('standard', nodePath, nodePath, trace).then<string>(undefined, () => {
-					 return Files.resolve('standard', globalNodePath, directory, trace);
+				 promise = Files.resolve(style, nodePath, nodePath, trace).then<string>(undefined, () => {
+					 return Files.resolve(style, globalNodePath, directory, trace);
 				 });
 			} else {
-				promise = Files.resolve('standard', globalNodePath, directory, trace);
+				promise = Files.resolve(style, globalNodePath, directory, trace);
 			}
 		} else {
-			promise = Files.resolve('standard', globalNodePath, workspaceRoot, trace);
+			promise = Files.resolve(style, globalNodePath, workspaceRoot, trace);
 		}
 		document2Library[event.document.uri] = promise.then((path) => {
 			let library = path2Library[path];
 			if (!library) {
 				library = require(path);
 				if (!library.lintText) {
-					throw new Error(`The standard library doesn\'t export a lintText.`);
+					throw new Error(`The ${style} library doesn\'t export a lintText.`);
 				}
-				connection.console.info(`standard library loaded from: ${path}`);
+				connection.console.info(`${style} library loaded from: ${path}`);
 				path2Library[path] = library;
 			}
 			return library;
