@@ -16,6 +16,7 @@ You can add those options to [`settings.json`](https://code.visualstudio.com/doc
 * `standard.nodePath` - use this setting if an installed `standard` package can't be detected.
 * `standard.validate` - an array of language identifiers specify the files to be validated, defaults to `["javascript", "javascriptreact"]`.
 * `standard.workingDirectories` - an array for working directories to be used.
+* `standard.semistandard` - You can use `semistandard` if you set it `true`.
 * `standard.options` - of course you can still configure `standard` with this setting, for example:
 
 	```json

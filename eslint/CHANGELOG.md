@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1.3
+
+1. Add semistandard option, thanks to kutyel
+
 ## 1.1.2
 
 1. Fix typo
