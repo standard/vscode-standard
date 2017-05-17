@@ -291,9 +291,10 @@ export function realActivate(context: ExtensionContext) {
 					context.globalState.update(key, state);
 				}
 			} else {
+				const style = workspace.getConfiguration('standard').semistandard ? 'semistandard' : 'standard';
 				client.info([
 					`Failed to load the JavaScript Standard Style library for the document '${uri.fsPath}'.`,
-					'To use JavaScript Standard Style for single JavaScript file install standard globally using \'npm install -g standard\'.',
+					`To use JavaScript ${style.charAt(0).toUpperCase().concat(style.substr(1))} Style for single JavaScript file install ${style} globally using 'npm install -g ${style}'.`,
 					'You need to reopen VS Code after installing standard.',
 				].join('\n'));
 				if (!state.global) {

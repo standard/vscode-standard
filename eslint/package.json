@@ -52,6 +52,11 @@
           "default": {},
           "description": "The JavaScript Standard Style options object to provide args normally passed to JavaScript Standard Style when executed from a command line."
         },
+        "standard.semistandard": {
+          "type": "boolan",
+          "default": false,
+          "description": "Controls whether JavaScript Semistandard Style should be allowed or not."
+        },
         "standard.trace.server": {
           "type": "string",
           "enum": [
