@@ -271,12 +271,6 @@ export function realActivate(context: ExtensionContext) {
 			const key = 'noStandardMessageShown';
 			let state = context.globalState.get<NoStandardState>(key, {});
 			let uri: Uri = Uri.parse(params.source.uri);
-			let configuration = workspace.getConfiguration('standard');
-			if (configuration.semistandard === true) {
-				window.showErrorMessage('Failed to load semistandard library, make sure you have it installed either locally or globally');
-			} else {
-				window.showErrorMessage('Failed to load standard library, make sure you have it installed either locally or globally');
-			}
 			if (workspace.rootPath) {
 				client.info([
 					'',
