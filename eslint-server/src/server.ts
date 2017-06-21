@@ -18,7 +18,7 @@ import {
 
 import Uri from 'vscode-uri';
 import path = require('path');
-
+const deglob = require('deglob');
 namespace Is {
 	const toString = Object.prototype.toString;
 
@@ -41,7 +41,10 @@ namespace CommandIds {
 interface Map<V> {
 	[key: string]: V;
 }
-
+interface Opts {
+	ignore?: string[];
+	cwd?: string
+}
 interface StandardError extends Error {
 	messageTemplate?: string;
 	messageData?: {
@@ -178,8 +181,8 @@ interface ESLintModuleCallback {
 }
 interface ESLintModule {
 	lintText(text: string, opts?: CLIOptions, cb?: ESLintModuleCallback): void;
+	parseOpts(opts: Object): Opts;
 }
-
 function makeDiagnostic(problem: ESLintProblem): Diagnostic {
 	let message = (problem.ruleId != null)
 		? `${problem.message} (${problem.ruleId})`
@@ -223,7 +226,7 @@ function recordCodeAction(document: TextDocument, diagnostic: Diagnostic, proble
 		edits = Object.create(null);
 		codeActions[uri] = edits;
 	}
-	edits[computeKey(diagnostic)] = { label: `Fix this ${problem.ruleId} problem`, documentVersion: document.version, ruleId: problem.ruleId, edit: problem.fix};
+	edits[computeKey(diagnostic)] = { label: `Fix this ${problem.ruleId} problem`, documentVersion: document.version, ruleId: problem.ruleId, edit: problem.fix };
 }
 
 function convertSeverity(severity: number): DiagnosticSeverity {
@@ -347,9 +350,9 @@ documents.onDidOpen((event) => {
 			let file = uri.fsPath;
 			let directory = path.dirname(file);
 			if (nodePath) {
-				 promise = Files.resolve(style, nodePath, nodePath, trace).then<string>(undefined, () => {
-					 return Files.resolve(style, globalNodePath, directory, trace);
-				 });
+				promise = Files.resolve(style, nodePath, nodePath, trace).then<string>(undefined, () => {
+					return Files.resolve(style, globalNodePath, directory, trace);
+				});
 			} else {
 				promise = Files.resolve(style, globalNodePath, directory, trace);
 			}
@@ -439,7 +442,7 @@ function trace(message: string, verbose?: string): void {
 	connection.tracer.log(message, verbose);
 }
 
-connection.onInitialize((params): Thenable<InitializeResult | ResponseError<InitializeError>>  | InitializeResult | ResponseError<InitializeError> => {
+connection.onInitialize((params): Thenable<InitializeResult | ResponseError<InitializeError>> | InitializeResult | ResponseError<InitializeError> => {
 	let initOptions: {
 		legacyModuleResolve: boolean;
 		nodePath: string;
@@ -466,7 +469,7 @@ connection.onDidChangeConfiguration((params) => {
 		for (let entry of settings.standard.workingDirectories) {
 			let directory: string;
 			let changeProcessCWD = false;
-			if  (Is.string(entry)) {
+			if (Is.string(entry)) {
 				directory = entry;
 			} else if (DirectoryItem.is(entry)) {
 				directory = entry.directory;
@@ -628,7 +631,7 @@ function getMessage(err: any, document: TextDocument): string {
 }
 
 function validate(document: TextDocument, library: ESLintModule, publishDiagnostics: boolean = true): void {
-	let newOptions: CLIOptions = Object.assign(Object.create(null), {filename: document.uri}, options);
+	let newOptions: CLIOptions = Object.assign(Object.create(null), { filename: document.uri }, options);
 	let content = document.getText();
 	let uri = document.uri;
 	let file = getFilePath(document);
@@ -654,33 +657,46 @@ function validate(document: TextDocument, library: ESLintModule, publishDiagnost
 				}
 			}
 		}
-
-		// Clean previously computed code actions.
-		delete codeActions[uri];
-		library.lintText(content, newOptions, function (error: StandardError, report: ESLintReport): void {
-			if (error) {
-				connection.window.showErrorMessage(error.message)
-				return connection.sendNotification(StatusNotification.type, { state: Status.error });
+		var opts = library.parseOpts(newOptions);
+		var deglobOpts = {
+			ignore: opts.ignore,
+			cwd: opts.cwd,
+			configKey: 'standard'
+		}
+		deglob([file], deglobOpts, function (err: any, files: any) {
+			if (err) {
+				return connection.window.showWarningMessage(err);
 			}
-			let diagnostics: Diagnostic[] = [];
-			if (report && report.results && Array.isArray(report.results) && report.results.length > 0) {
-				let docReport = report.results[0];
-				if (docReport.messages && Array.isArray(docReport.messages)) {
-					docReport.messages.forEach((problem) => {
-						if (problem) {
-							let diagnostic = makeDiagnostic(problem);
-							diagnostics.push(diagnostic);
-							if (supportedAutoFixLanguages.has(document.languageId)) {
-								recordCodeAction(document, diagnostic, problem);
-							}
+			if (files.length === 1) {
+				// Clean previously computed code actions.
+				delete codeActions[uri];
+				library.lintText(content, newOptions, function (error: StandardError, report: ESLintReport): void {
+					if (error) {
+						connection.window.showErrorMessage(error.message)
+						return connection.sendNotification(StatusNotification.type, { state: Status.error });
+					}
+					let diagnostics: Diagnostic[] = [];
+					if (report && report.results && Array.isArray(report.results) && report.results.length > 0) {
+						let docReport = report.results[0];
+						if (docReport.messages && Array.isArray(docReport.messages)) {
+							docReport.messages.forEach((problem) => {
+								if (problem) {
+									let diagnostic = makeDiagnostic(problem);
+									diagnostics.push(diagnostic);
+									if (supportedAutoFixLanguages.has(document.languageId)) {
+										recordCodeAction(document, diagnostic, problem);
+									}
+								}
+							});
 						}
-					});
-				}
-			}
-			if (publishDiagnostics) {
-				connection.sendDiagnostics({ uri, diagnostics });
+					}
+					if (publishDiagnostics) {
+						connection.sendDiagnostics({ uri, diagnostics });
+					}
+				})
 			}
 		})
+
 	} finally {
 		if (cwd !== process.cwd()) {
 			process.chdir(cwd);
@@ -708,7 +724,7 @@ function tryHandleNoConfig(error: any, document: TextDocument, library: ESLintMo
 					uri: document.uri
 				}
 			})
-		.then(undefined, () => { });
+			.then(undefined, () => { });
 		noConfigReported[document.uri] = library;
 	}
 	return Status.warn;
@@ -900,7 +916,7 @@ connection.onDidChangeWatchedFiles((params) => {
 class Fixes {
 	private keys: string[];
 
-	constructor (private edits: Map<AutoFix>) {
+	constructor(private edits: Map<AutoFix>) {
 		this.keys = Object.keys(edits);
 	}
 
@@ -918,7 +934,7 @@ class Fixes {
 
 	public getScoped(diagnostics: Diagnostic[]): AutoFix[] {
 		let result: AutoFix[] = [];
-		for(let diagnostic of diagnostics) {
+		for (let diagnostic of diagnostics) {
 			let key = computeKey(diagnostic);
 			let editInfo = this.edits[key];
 			if (editInfo) {
@@ -999,7 +1015,7 @@ connection.onCodeAction((params) => {
 		documentVersion = editInfo.documentVersion;
 		ruleId = editInfo.ruleId;
 		let workspaceChange = new WorkspaceChange();
-		workspaceChange.getTextEditChange({uri, version: documentVersion}).add(createTextEdit(editInfo));
+		workspaceChange.getTextEditChange({ uri, version: documentVersion }).add(createTextEdit(editInfo));
 		commands[CommandIds.applySingleFix] = workspaceChange;
 		result.push(Command.create(editInfo.label, CommandIds.applySingleFix));
 	};
@@ -1022,14 +1038,14 @@ connection.onCodeAction((params) => {
 		}
 		if (same.length > 1) {
 			let sameFixes: WorkspaceChange = new WorkspaceChange();
-			let sameTextChange = sameFixes.getTextEditChange({uri, version: documentVersion});
+			let sameTextChange = sameFixes.getTextEditChange({ uri, version: documentVersion });
 			same.map(createTextEdit).forEach(edit => sameTextChange.add(edit));
 			commands[CommandIds.applySameFixes] = sameFixes;
 			result.push(Command.create(`Fix all ${ruleId} problems`, CommandIds.applySameFixes));
 		}
 		if (all.length > 1) {
 			let allFixes: WorkspaceChange = new WorkspaceChange();
-			let allTextChange = allFixes.getTextEditChange({uri, version: documentVersion});
+			let allTextChange = allFixes.getTextEditChange({ uri, version: documentVersion });
 			all.map(createTextEdit).forEach(edit => allTextChange.add(edit));
 			commands[CommandIds.applyAllFixes] = allFixes;
 			result.push(Command.create(`Fix all auto-fixable problems`, CommandIds.applyAllFixes));

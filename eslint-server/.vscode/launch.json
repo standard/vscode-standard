@@ -12,7 +12,7 @@
 			// "trace": "all",
 			// Port to attach to.
 			"port": 6010,
-			"sourceMaps": false,
+			"sourceMaps": true,
 			"outFiles": ["${workspaceRoot}/../eslint/server/**/*.js"]
 		}
 	]
