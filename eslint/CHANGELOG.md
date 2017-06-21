@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1.5
+
+1. Fix `ignore` [bug](https://github.com/chenxsan/vscode-standardjs/issues/22)
+
 ## 1.1.3
 
 1. Add semistandard option, thanks to kutyel
