@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1.6
+
+1. Fix vue doc
+
 ## 1.1.5
 
 1. Fix `ignore` [bug](https://github.com/chenxsan/vscode-standardjs/issues/22)
