@@ -13,7 +13,7 @@
     "url": "https://github.com/chenxsan/vscode-standardjs/issues"
   },
   "publisher": "chenxsan",
-  "icon": "standard_icon.svg",
+  "icon": "standard_icon.png",
   "categories": [
     "Linters"
   ],
