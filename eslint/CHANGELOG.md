@@ -1,5 +1,10 @@
 # Change Log
 
+## 1.1.7
+
+1. Fix doc
+2. Update icon
+
 ## 1.1.6
 
 1. Fix vue doc

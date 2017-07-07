@@ -46,13 +46,13 @@ You can add those options to [`settings.json`](https://code.visualstudio.com/doc
 	"standard.validate": [
 		"javascript",
 		"javascriptreact",
-		"vue"
+		"html"
 	],
 	"standard.options": {
 		"plugins": ["html"]
 	},
 	"files.associations": {
-		"*.vue": "vue"
+		"*.vue": "html"
 	},
 	```
 	If you want to enable `autoFix` for the new languages, you should enable it yourself:
@@ -61,7 +61,7 @@ You can add those options to [`settings.json`](https://code.visualstudio.com/doc
 	"standard.validate": [
 		"javascript",
 		"javascriptreact",
-		{ "language": "vue", "autoFix": true }
+		{ "language": "html", "autoFix": true }
 	],
 	"standard.options": {
 		"plugins": ["html"]
