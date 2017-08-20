@@ -6,7 +6,7 @@
 
 import {
 	createConnection, IConnection,
-	ResponseError, RequestType, NotificationType, InitializeResult, InitializeError,
+	RequestType, NotificationType,
 	Diagnostic, DiagnosticSeverity, Range, Files,
 	TextDocuments, TextDocument, TextDocumentSyncKind, TextEdit, TextDocumentIdentifier, TextDocumentSaveReason,
 	Command, BulkRegistration, BulkUnregistration,
@@ -351,7 +351,7 @@ documents.onDidOpen((event) => {
 			let file = uri.fsPath;
 			let directory = path.dirname(file);
 			if (nodePath) {
-				promise = Files.resolve(style, nodePath, nodePath, trace).then<string>(undefined, () => {
+				promise = Files.resolve(style, nodePath, nodePath, trace).then<string, string>(undefined, () => {
 					return Files.resolve(style, globalNodePath, directory, trace);
 				});
 			} else {
@@ -443,7 +443,7 @@ function trace(message: string, verbose?: string): void {
 	connection.tracer.log(message, verbose);
 }
 
-connection.onInitialize((params): Thenable<InitializeResult | ResponseError<InitializeError>> | InitializeResult | ResponseError<InitializeError> => {
+connection.onInitialize((params) => {
 	let initOptions: {
 		legacyModuleResolve: boolean;
 		nodePath: string;
@@ -680,40 +680,68 @@ function validate(document: TextDocument, library: ESLintModule, publishDiagnost
 			cwd: opts.cwd,
 			configKey: 'standard'
 		}
-		deglob([file], deglobOpts, function (err: any, files: any) {
-			if (err) {
-				return connection.window.showWarningMessage(err);
-			}
-			if (files.length === 1) {
-				// Clean previously computed code actions.
-				delete codeActions[uri];
-				library.lintText(content, newOptions, function (error: StandardError, report: ESLintReport): void {
-					if (error) {
-						connection.window.showErrorMessage(error.message)
-						return connection.sendNotification(StatusNotification.type, { state: Status.error });
-					}
-					let diagnostics: Diagnostic[] = [];
-					if (report && report.results && Array.isArray(report.results) && report.results.length > 0) {
-						let docReport = report.results[0];
-						if (docReport.messages && Array.isArray(docReport.messages)) {
-							docReport.messages.forEach((problem) => {
-								if (problem) {
-									let diagnostic = makeDiagnostic(problem);
-									diagnostics.push(diagnostic);
-									if (supportedAutoFixLanguages.has(document.languageId)) {
-										recordCodeAction(document, diagnostic, problem);
-									}
+		// untitled file, should refactor it when have time.
+		if (typeof file === 'undefined') {
+			delete codeActions[uri];
+			library.lintText(content, newOptions, function (error: StandardError, report: ESLintReport): void {
+				if (error) {
+					connection.window.showErrorMessage(error.message)
+					return connection.sendNotification(StatusNotification.type, { state: Status.error });
+				}
+				let diagnostics: Diagnostic[] = [];
+				if (report && report.results && Array.isArray(report.results) && report.results.length > 0) {
+					let docReport = report.results[0];
+					if (docReport.messages && Array.isArray(docReport.messages)) {
+						docReport.messages.forEach((problem) => {
+							if (problem) {
+								let diagnostic = makeDiagnostic(problem);
+								diagnostics.push(diagnostic);
+								if (supportedAutoFixLanguages.has(document.languageId)) {
+									recordCodeAction(document, diagnostic, problem);
 								}
-							});
+							}
+						});
+					}
+				}
+				if (publishDiagnostics) {
+					connection.sendDiagnostics({ uri, diagnostics });
+				}
+			})
+		} else {
+			deglob([file], deglobOpts, function (err: any, files: any) {
+				if (err) {
+					return connection.window.showWarningMessage(err);
+				}
+				if (files.length === 1) {
+					// Clean previously computed code actions.
+					delete codeActions[uri];
+					library.lintText(content, newOptions, function (error: StandardError, report: ESLintReport): void {
+						if (error) {
+							connection.window.showErrorMessage(error.message)
+							return connection.sendNotification(StatusNotification.type, { state: Status.error });
 						}
-					}
-					if (publishDiagnostics) {
-						connection.sendDiagnostics({ uri, diagnostics });
-					}
-				})
-			}
-		})
-
+						let diagnostics: Diagnostic[] = [];
+						if (report && report.results && Array.isArray(report.results) && report.results.length > 0) {
+							let docReport = report.results[0];
+							if (docReport.messages && Array.isArray(docReport.messages)) {
+								docReport.messages.forEach((problem) => {
+									if (problem) {
+										let diagnostic = makeDiagnostic(problem);
+										diagnostics.push(diagnostic);
+										if (supportedAutoFixLanguages.has(document.languageId)) {
+											recordCodeAction(document, diagnostic, problem);
+										}
+									}
+								});
+							}
+						}
+						if (publishDiagnostics) {
+							connection.sendDiagnostics({ uri, diagnostics });
+						}
+					})
+				}
+			})
+		}
 	} finally {
 		if (cwd !== process.cwd()) {
 			process.chdir(cwd);
