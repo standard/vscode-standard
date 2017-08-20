@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.1.8
+
+1. Fix [bug](https://github.com/chenxsan/vscode-standardjs/issues/37)
+2. Update deps
 ## 1.1.7
 
 1. Fix doc
