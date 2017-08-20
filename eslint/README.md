@@ -30,6 +30,8 @@ You can add those options to [`settings.json`](https://code.visualstudio.com/doc
 	}
 	```
 
+	 **But it's not recommended adding them in `settings.json` file, because the settings would be globally. You'd better set them per project in package.json file.**
+
 ### Commands
 
 * `Fix all auto-fixable problems` - applies JavaScript Standard Style auto-fix resolutions to all fixable problems.
