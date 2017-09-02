@@ -131,6 +131,11 @@
             "javascriptreact"
           ],
           "description": "An array of language ids which should be validated by JavaScript Standard Style"
+        },
+        "standard.usePackageJson": {
+          "type": "boolean",
+          "default": false,
+          "description": "Activate only if present in package.json and use settings specified there."
         }
       }
     },
