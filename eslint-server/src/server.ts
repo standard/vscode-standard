@@ -19,6 +19,7 @@ import {
 
 import Uri from 'vscode-uri';
 import path = require('path');
+import fs = require('fs');
 const deglob = require('deglob');
 namespace Is {
 	const toString = Object.prototype.toString;
@@ -133,6 +134,7 @@ interface Settings {
 		semistandard?: boolean;
 		validate?: (string | ValidateItem)[];
 		workingDirectories?: (string | DirectoryItem)[];
+		usePackageJson?: boolean;
 	}
 	[key: string]: any;
 }
@@ -343,7 +345,38 @@ documents.onDidOpen((event) => {
 	if (!supportedLanguages[event.document.languageId]) {
 		return;
 	}
-	const style = settings.standard.semistandard ? 'semistandard' : 'standard';
+	const usePackageJson = settings.standard.usePackageJson;
+	let pkgStyle
+	let pkgOptions
+	if (usePackageJson) {
+		const pkgPath = path.join(workspaceRoot, 'package.json');
+		const pkgExists = fs.existsSync(pkgPath);
+		if (pkgExists) {
+			const pkgStr = fs.readFileSync(pkgPath, 'utf8');
+			const pkg = JSON.parse(pkgStr);
+			if (pkg && pkg.devDependencies && pkg.devDependencies.standard) {
+				pkgStyle = 'standard';
+			} else if (pkg && pkg.devDependencies && pkg.devDependencies.semistandard) {
+				pkgStyle = 'semistandard';
+			}
+	
+			if (pkgStyle) {
+				pkgOptions = pkg[pkgStyle];
+			} else {
+				connection.console.info('no standard in package.json');
+				return;
+			}
+		}		
+	}
+
+	let style = settings.standard.semistandard ? 'semistandard' : 'standard';
+	if (pkgStyle) {
+		style = pkgStyle;
+	}
+	if (pkgOptions) {
+		options = pkgOptions;
+	}
+
 	if (!document2Library[event.document.uri]) {
 		let uri = Uri.parse(event.document.uri);
 		let promise: Thenable<string>
