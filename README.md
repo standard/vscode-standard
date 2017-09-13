@@ -2,50 +2,63 @@
 
 VSCode extension to integrate [JavaScript Standard Style](https://github.com/feross/standard) into VSCode.
 
+We support **JavaScript Semi-Standard Style** too if you prefer keeping the semicolon.
+
 ## How to use
 
-1. Install vscode-standardjs extension
-2. Install `standard` either globally or locally, the later is recommended
+1. Install this extension, if you don't know how to install, check the [documentation](https://code.visualstudio.com/docs/editor/extension-gallery#_browse-and-install-extensions)
+2. Install `standard` or `semistandard` either globally or locally, we recommend you to install them locally, i.e. right under your projects.
 3. Set `"javascript.validate.enable": false` in VSCode `settings.json` to disable VSCode built-in validator
 
-### Options
+## Options
 
-We give you some options to customize vscode-standardjs in [`settings.json`](https://code.visualstudio.com/docs/customization/userandworkspace).
+We give you some options to customize vscode-standardjs in VSCode [`settings.json`](https://code.visualstudio.com/docs/customization/userandworkspace).
 
-* `standard.enable` - enable or disable JavaScript Standard Style, defaults to `true`.
-* `standard.run` - run linter `onSave` or `onType`, defaults to `onType`.
-* `standard.autoFixOnSave` - enable or disable auto fix on save. It is only available when VS Code's `files.autoSave` is either `off`, `onFocusChange` or `onWindowChange`. It will not work with `afterDelay`.
-* `standard.nodePath` - use this setting if an installed `standard` package can't be detected.
-* `standard.validate` - an array of language identifiers specify the files to be validated, defaults to `["javascript", "javascriptreact"]`.
-* `standard.workingDirectories` - an array for working directories to be used.
-* `standard.semistandard` - You can use `semistandard` if you set this option to `true`. **Just make sure you installed `semistandard` package instead of `standard`.**
-* `standard.usePackageJson` - enable JavaScript Standard Style only when they are presented under your project root.
-* `standard.options` - of course you can still configure `standard` itself with this setting, for example:
+Option|Description|Default
+---|---|---
+`standard.enable`|enable or disable JavaScript Standard Style|`true`
+`standard.run`|run linter `onSave` or `onType`|`onType`
+`standard.autoFixOnSave`|enable or disable auto fix on save. It is only available when VS Code's `files.autoSave` is either `off`, `onFocusChange` or `onWindowChange`. It will not work with `afterDelay`.|`false`
+`standard.nodePath`|use this setting if an installed `standard` package can't be detected.|`null`
+`standard.validate`|an array of language identifiers specify the files to be validated|`["javascript", "javascriptreact"]`
+`standard.workingDirectories`|an array for working directories to be used.|`[]`
+`standard.semistandard`|You can use `semistandard` if you set this option to `true`. **Just make sure you installed `semistandard` package instead of `standard`.**|`false`
+`standard.usePackageJson`|enable JavaScript Standard Style only when they are presented under your project root.|`false`
 
-	```json
-	"standard.options": {
-		"globals": ["$", "jQuery", "fetch"],
-		"ignore": [
-			"node_modules/**"
-		],
-		"plugins": ["html"],
-		"parser": "babel-eslint"
-	}
-	```
+Of course you can still configure `standard` itself with `standard.options` setting, for example:
 
-	 **But it's not recommended adding them in `settings.json` file, because the settings would be applied globally. You'd better set them per project in package.json file.**
+```json
+"standard.options": {
+	"globals": ["$", "jQuery", "fetch"],
+	"ignore": [
+		"node_modules/**"
+	],
+	"plugins": ["html"],
+	"parser": "babel-eslint",
+	"envs": ["jest"]
+}
+```
+
+But it's not recommended adding them to `settings.json` file, because the settings would be applied globally. You'd better set them per project in package.json file. For example:
+
+```json
+"standard": {
+	"plugsin": ["html"],
+	"parser": "babel-eslint"
+}
+```
 
 ### Commands
 
 * `Fix all auto-fixable problems` - applies JavaScript Standard Style auto-fix resolutions to all fixable problems.
-* `Disable JavaScript Standard Style for this Workspace` - disables JavaScript Standard Style extension for this workspace.
+* `Disable JavaScript Standard Style for this Workspace` - disable JavaScript Standard Style extension for this workspace.
 * `Enable JavaScript Standard Style for this Workspace` - enable JavaScript Standard Style extension for this workspace.
 
 ### FAQ
 
-1. How to lint `script` tag in vue or html files?
+1. How to lint `script` tag in `vue` or `html` files?
 
-    You have to install `eslint-plugin-html` first, then enable the lint for those file types in `settings.json` with:
+    You can lint them with `eslint-plugin-html`, just install it first, then enable linting for those file types in `settings.json` with:
 
 	```json
 	"standard.validate": [
