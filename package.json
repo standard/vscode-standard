@@ -15,7 +15,8 @@
   "publisher": "chenxsan",
   "icon": "standard_icon.png",
   "categories": [
-    "Linters"
+    "Linters",
+    "Formatters"
   ],
   "engines": {
     "vscode": "^1.16.0"
