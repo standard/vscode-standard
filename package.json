@@ -18,6 +18,11 @@
     "Linters",
     "Formatters"
   ],
+  "keywords": [
+    "javascript",
+    "javascriptreact",
+    "vue"
+  ],
   "engines": {
     "vscode": "^1.16.0"
   },
