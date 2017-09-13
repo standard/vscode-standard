@@ -80,3 +80,8 @@ We give you some options to customize vscode-standardjs in [`settings.json`](htt
 3. Run `watch` task to compile the client and server
 4. To run/debug the extension use the `Launch Extension` launch configuration
 5. To debug the server use the `Attach to Server` launch configuration
+
+## How to package
+
+1. Run `npm install`
+2. Run `npm run package` to build a .vsix file, then you can install it with `code --install-extension vscode-standardjs.vsix`

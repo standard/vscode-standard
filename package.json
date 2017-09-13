@@ -2,7 +2,7 @@
   "name": "vscode-standardjs",
   "displayName": "JavaScript Standard Style",
   "description": "Integrates JavaScript Standard Style into VS Code.",
-  "version": "1.1.8",
+  "version": "1.2.0",
   "author": "Sam Chen",
   "license": "MIT",
   "repository": {
@@ -185,11 +185,13 @@
     "watch:client": "tsc -w -p ./client/tsconfig.json",
     "watch:server": "tsc -w -p ./server/tsconfig.json",
     "compile": "npm run compile:client && npm run compile:server",
-    "postinstall": "cd client && npm install && cd ../server && npm install && cd .."
+    "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
+    "package": "vsce package"
   },
   "devDependencies": {
     "@types/node": "^6.0.88",
-    "typescript": "^2.4.2"
+    "typescript": "^2.4.2",
+    "vsce": "^1.30.0"
   },
   "dependencies": {
     "async": "^2.5.0"
