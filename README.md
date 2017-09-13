@@ -85,3 +85,7 @@ We give you some options to customize vscode-standardjs in [`settings.json`](htt
 
 1. Run `npm install`
 2. Run `npm run package` to build a .vsix file, then you can install it with `code --install-extension vscode-standardjs.vsix`
+
+## TODO
+
+1. [ ] add tests
