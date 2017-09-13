@@ -1,21 +1,21 @@
 {
-	"name": "eslint-server",
-	"version": "1.2.1",
-	"author": "Microsoft Corporation",
+	"name": "server",
+	"version": "1.1.8",
+	"author": "Sam Chen",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/Microsoft/vscode-eslint.git"
+		"url": "https://github.com/chenxsan/vscode-standardjs.git"
 	},
 	"bugs": {
-		"url": "https://github.com/Microsoft/vscode-eslint/issues"
+		"url": "https://github.com/chenxsan/vscode-standardjs/issues"
 	},
 	"engines": {
 		"node": "*"
 	},
 	"dependencies": {
 		"deglob": "^2.1.0",
-		"vscode-languageserver": "^3.3.0",
+		"vscode-languageserver": "^3.4.2",
 		"vscode-uri": "^1.0.1"
 	},
 	"devDependencies": {
