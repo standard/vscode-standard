@@ -317,7 +317,9 @@ function resolveSettings(document: TextDocument): Thenable<TextDocumentSettings>
 		// when settings.usePackageJson is true
 		// we need to do more
 		let { usePackageJson } = settings
-		if (usePackageJson) {
+		// when we open single file not under project,
+		// that workingspaceFolder would be undefined
+		if (usePackageJson && settings.workspaceFolder) {
 			let pkgPath = path.join(
 				getFilePath(settings.workspaceFolder.uri),
 				'package.json'
