@@ -33,7 +33,7 @@ Option|Description|Default
 `standard.validate`|an array of language identifiers specify the files to be validated|`["javascript", "javascriptreact"]`
 `standard.workingDirectories`|an array for working directories to be used.|`[]`
 `standard.semistandard`|You can use `semistandard` if you set this option to `true`. **Just make sure you've installed the `semistandard` package, instead of `standard`.**|`false`
-`standard.usePackageJson`|only enable JavaScript Standard Style when it's specified in your `package.json`.|`false`
+`standard.usePackageJson`|if set to `true`, JavaScript Standard Style will use project's `package.json` settings, otherwise globally installed `standard` module is used |`false`
 
 
 ## Configuring Standard

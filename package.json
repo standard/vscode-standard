@@ -151,7 +151,7 @@
         "standard.usePackageJson": {
           "type": "boolean",
           "default": false,
-          "description": "Activate JavaScript Standard Style only when it's presented in package.json."
+          "description": "Activate JavaScript Standard Style based on project's package.json settings, use globally installed standard module if set to \"false\""
         }
       }
     },
