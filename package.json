@@ -1,6 +1,6 @@
 {
   "name": "vscode-standardjs",
-  "displayName": "JavaScript Standard Style",
+  "displayName": "StandardJS - JavaScript Standard Style",
   "description": "Integrates JavaScript Standard Style into VS Code.",
   "version": "1.2.1",
   "author": "Sam Chen",
