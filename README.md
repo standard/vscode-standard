@@ -121,7 +121,8 @@ When you open the Command Palette in VSCode (⇧⌘P or Ctrl+Shift+P), this plug
 
 ## How to package
 
-1. Run `npm install`.
+1. Run `npm install`,
+2. Run `npm run compile`,
 2. Run `npm run package` to build a .vsix file, then you can install it with `code --install-extension vscode-standardjs.vsix`.
 
 ## TODO
