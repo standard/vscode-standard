@@ -1,6 +1,6 @@
 {
 	"name": "client",
-	"displayName": "JavaScript Standard Style",
+	"displayName": "StandardJS - JavaScript Standard Style",
 	"description": "Integrates JavaScript Standard Style into VS Code.",
 	"version": "1.1.8",
 	"author": "Sam Chen",
