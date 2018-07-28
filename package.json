@@ -2,7 +2,7 @@
   "name": "vscode-standardjs",
   "displayName": "StandardJS - JavaScript Standard Style",
   "description": "Integrates JavaScript Standard Style into VS Code.",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "author": "Sam Chen",
   "license": "MIT",
   "repository": {
@@ -197,7 +197,7 @@
   "devDependencies": {
     "@types/node": "^6.0.88",
     "typescript": "^2.4.2",
-    "vsce": "^1.30.0"
+    "vsce": "^1.44.0"
   },
   "dependencies": {
     "async": "^2.5.0"
