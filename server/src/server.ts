@@ -15,6 +15,8 @@ import {
 	ExecuteCommandRequest, DidChangeWatchedFilesNotification, DidChangeConfigurationNotification,
 	Proposed, ProposedFeatures
 } from 'vscode-languageserver';
+type LinterValues = 'standard' | 'semistandard' | 'standardx';
+type LinterNameValues = 'JavaScript Standard Style' | 'JavaScript Semi-Standard Style' | 'JavaScript Standard Style with custom tweaks';
 
 import Uri from 'vscode-uri';
 import path = require('path');
@@ -103,7 +105,7 @@ interface TextDocumentSettings {
 	validate: boolean;
 	autoFix: boolean;
 	autoFixOnSave: boolean;
-	semistandard: boolean;
+	engine: LinterValues;
 	usePackageJson: boolean;
 	options: any | undefined;
 	run: RunValues;
@@ -164,8 +166,8 @@ interface StandardModule {
 	lintText(text: string, opts?: CLIOptions, cb?: StandardModuleCallback): void;
 	parseOpts(opts: Object): Opts;
 }
-type SourceValues = 'standard' | 'semistandard';
-function makeDiagnostic(problem: StandardProblem, source: SourceValues): Diagnostic {
+
+function makeDiagnostic(problem: StandardProblem, source: LinterValues): Diagnostic {
 	let message = (problem.ruleId != null)
 		? `${problem.message} (${problem.ruleId})`
 		: `${problem.message}`;
@@ -312,8 +314,13 @@ function resolveSettings(document: TextDocument): Thenable<TextDocumentSettings>
 	}
 	resultPromise = connection.workspace.getConfiguration({ scopeUri: uri, section: '' }).then((settings: TextDocumentSettings) => {
 		let uri = Uri.parse(document.uri);
-		let linter = settings.semistandard ? 'semistandard' : 'standard';
-		let linterName = settings.semistandard ? 'JavaScript Semi-Standard Style' : 'JavaScript Standard Style';
+		let linterNames: { [linter: string]: LinterNameValues; } = {
+			'standard': 'JavaScript Standard Style',
+			'semistandard': 'JavaScript Semi-Standard Style',
+			'standardx': 'JavaScript Standard Style with custom tweaks'
+		}
+		let linter = settings.engine;
+		let linterName = linterNames[settings.engine];
 		// when settings.usePackageJson is true
 		// we need to do more
 		let { usePackageJson } = settings
@@ -334,12 +341,18 @@ function resolveSettings(document: TextDocument): Thenable<TextDocumentSettings>
 				} else if (pkg && pkg.devDependencies && pkg.devDependencies.semistandard) {
 					linter = 'semistandard';
 					linterName = 'JavaScript Semi-Standard Style';
+				} else if (pkg && pkg.devDependencies && pkg.devDependencies.standardx) {
+					linter = 'standardx';
+					linterName = 'JavaScript Standard Style with custom tweaks';
 				}
-				// if standard or semistandard config presented in package.json
-				if (pkg && pkg.devDependencies && pkg.devDependencies.standard || pkg && pkg.devDependencies && pkg.devDependencies.semistandard) {
+				// if standard, semistandard or standardx config presented in package.json
+				if (pkg && pkg.devDependencies && pkg.devDependencies.standard
+					|| pkg && pkg.devDependencies && pkg.devDependencies.semistandard
+					|| pkg && pkg.devDependencies && pkg.devDependencies.standardx) {
 					if (pkg[linter]) {
 						// if [linter] presented in package.json
 						// combine the global one.
+						settings.engine = linter;
 						settings.options = Object.assign({}, settings.options, pkg[linter]);
 					} else {
 						// default options to those in settings.json
@@ -755,7 +768,7 @@ function validate(document: TextDocument, settings: TextDocumentSettings, publis
 		var deglobOpts = {
 			ignore: opts.ignore,
 			cwd: opts.cwd,
-			configKey: settings.semistandard ? 'semistandard' : 'standard'
+			configKey: settings.engine
 		}
 		async.waterfall([
 			function (callback: any) {
@@ -799,7 +812,7 @@ function validate(document: TextDocument, settings: TextDocumentSettings, publis
 					if (docReport.messages && Array.isArray(docReport.messages)) {
 						docReport.messages.forEach((problem) => {
 							if (problem) {
-								let diagnostic = makeDiagnostic(problem, settings.semistandard ? 'semistandard' : 'standard');
+								let diagnostic = makeDiagnostic(problem, settings.engine);
 								diagnostics.push(diagnostic);
 								if (settings.autoFix) {
 									recordCodeAction(document, diagnostic, problem);

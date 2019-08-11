@@ -62,11 +62,16 @@
           "default": {},
           "description": "The standard options object to provide args normally passed to JavaScript Standard Style when executed from a command line."
         },
-        "standard.semistandard": {
+        "standard.engine": {
           "scope": "resource",
-          "type": "boolean",
-          "default": false,
-          "description": "Controls whether JavaScript Semistandard Style should be enabled or disabled."
+          "type": "string",
+          "enum": [
+            "standard",
+            "semistandard",
+            "standardx"
+          ],
+          "default": "standard",
+          "description": "Controls whether VSCode should use an alternate Standard engine, like semistandard or standardx."
         },
         "standard.trace.server": {
           "scope": "window",

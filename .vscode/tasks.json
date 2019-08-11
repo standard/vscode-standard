@@ -4,7 +4,7 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"taskName": "watch",
+			"label": "watch",
 			"dependsOn": [
 				"npm: watch:client",
 				"npm: watch:server"
@@ -16,6 +16,7 @@
 			"problemMatcher": []
 		},
 		{
+			"label": "npm: watch:client",
 			"type": "npm",
 			"script": "watch:client",
 			"isBackground": true,
@@ -28,6 +29,7 @@
 			]
 		},
 		{
+			"label": "npm: watch:server",
 			"type": "npm",
 			"script": "watch:server",
 			"isBackground": true,

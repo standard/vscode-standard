@@ -17,9 +17,8 @@ import {
 	ServerOptions, Proposed, DocumentFilter, DidCloseTextDocumentNotification, DidOpenTextDocumentNotification,
 	CancellationToken, WorkspaceMiddleware
 } from 'vscode-languageclient';
-type LinterValues = 'standard' | 'semistandard';
-type LinterNameValues = 'JavaScript Standard Style' | 'JavaScript Semi-Standard Style';
-var linter: LinterValues;
+type LinterValues = 'standard' | 'semistandard' | 'standardx';
+type LinterNameValues = 'JavaScript Standard Style' | 'JavaScript Semi-Standard Style' | 'JavaScript Standard Style with custom tweaks';
 var linterName: LinterNameValues;
 
 namespace Is {
@@ -64,7 +63,7 @@ interface TextDocumentSettings {
 	validate: boolean;
 	autoFix: boolean;
 	autoFixOnSave: boolean;
-	semistandard: boolean;
+	engine: LinterValues;
 	usePackageJson: boolean;
 	options: any | undefined;
 	run: RunValues;
@@ -111,11 +110,12 @@ interface WorkspaceFolderItem extends QuickPickItem {
 }
 function getLinterName() {
 	let configuration = Workspace.getConfiguration('standard');
-	return configuration && configuration.get('semistandard', false) ? 'JavaScript Semi-Standard Style': 'JavaScript Standard Style';
-}
-function getLinter() {
-	let configuration = Workspace.getConfiguration('standard');
-	return configuration && configuration.get('semistandard', false) ? 'semistandard': 'standard';
+	let linterNames: { [linter: string]: LinterNameValues; } = {
+		'standard': 'JavaScript Standard Style',
+		'semistandard': 'JavaScript Semi-Standard Style',
+		'standardx': 'JavaScript Standard Style with custom tweaks'
+	}
+	return linterNames[configuration.get<LinterValues>('engine', 'standard')];
 }
 function pickFolder(folders: VWorkspaceFolder[], placeHolder: string): Thenable<VWorkspaceFolder> {
 	if (folders.length === 1) {
@@ -178,7 +178,7 @@ function disable() {
 	});
 }
 
-let dummyCommands: [Disposable];
+let dummyCommands: Disposable[];
 
 let defaultLanguages = ['javascript', 'javascriptreact'];
 function shouldBeValidated(textDocument: TextDocument): boolean {
@@ -243,7 +243,6 @@ export function activate(context: ExtensionContext) {
 }
 
 export function realActivate(context: ExtensionContext) {
-	linter = getLinter();
 	linterName = getLinterName();
 
 		let statusBarItem = Window.createStatusBarItem(StatusBarAlignment.Right, 0);
@@ -427,7 +426,7 @@ export function realActivate(context: ExtensionContext) {
 								validate: false,
 								autoFix: false,
 								autoFixOnSave: false,
-								semistandard: config.get('semistandard', false),
+								engine: config.get('engine', 'standard'),
 								usePackageJson: config.get('usePackageJson', false),
 								options: config.get('options', {}),
 								run: config.get('run', 'onType'),
@@ -546,7 +545,7 @@ export function realActivate(context: ExtensionContext) {
 				let uri: Uri = Uri.parse(params.source.uri);
 				let workspaceFolder = Workspace.getWorkspaceFolder(uri);
 				let config = Workspace.getConfiguration('standard');
-				let linter = config.get('semistandard', false) ? 'semistandard' : 'standard';
+				let linter = config.get('engine', 'standard');
 				if (workspaceFolder) {
 					client.info([
 						'',
