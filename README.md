@@ -32,7 +32,7 @@ Option|Description|Default
 `standard.run`|run linter `onSave` or `onType`|`onType`
 `standard.autoFixOnSave`|enable or disable auto fix on save. It is only available when VSCode's `files.autoSave` is either `off`, `onFocusChange` or `onWindowChange`. It will not work with `afterDelay`.|`false`
 `standard.nodePath`|use this setting if an installed `standard` package can't be detected.|`null`
-`standard.validate`|an array of language identifiers specify the files to be validated|`["javascript", "javascriptreact"]`
+`standard.validate`|an array of language identifiers specify the files to be validated|`["javascript", "javascriptreact", "typescript", "typescriptreact]`
 `standard.workingDirectories`|an array for working directories to be used.|`[]`
 `standard.engine`|You can use `semistandard` or `standardx` instead of `standard`. **Just make sure you've installed the `semistandard` or the `standardx` package, instead of `standard`.**|`standard`
 `standard.usePackageJson`|if set to `true`, JavaScript Standard Style will use project's `package.json` settings, otherwise globally installed `standard` module is used |`false`

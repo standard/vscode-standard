@@ -149,7 +149,9 @@
           },
           "default": [
             "javascript",
-            "javascriptreact"
+            "javascriptreact",
+            "typescript",
+            "typescriptreact"
           ],
           "description": "An array of language ids which should be validated by JavaScript Standard Style"
         },

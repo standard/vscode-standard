@@ -180,7 +180,7 @@ function disable() {
 
 let dummyCommands: Disposable[];
 
-let defaultLanguages = ['javascript', 'javascriptreact'];
+let defaultLanguages = ['javascript', 'javascriptreact', 'typescript', 'typescriptreact'];
 function shouldBeValidated(textDocument: TextDocument): boolean {
 	let config = Workspace.getConfiguration('standard', textDocument.uri);
 	if (!config.get('enable', true)) {
@@ -282,7 +282,7 @@ export function realActivate(context: ExtensionContext) {
 				serverRunning &&
 				(
 					standardStatus !== Status.ok ||
-					(editor && (editor.document.languageId === 'javascript' || editor.document.languageId === 'javascriptreact'))
+					(editor && defaultLanguages.indexOf(editor.document.languageId) > -1)
 				)
 			);
 		}
@@ -441,11 +441,11 @@ export function realActivate(context: ExtensionContext) {
 								continue;
 							}
 							if (config.get('enabled', true)) {
-								let validateItems = config.get<(ValidateItem | string)[]>('validate', ['javascript', 'javascriptreact']);
+								let validateItems = config.get<(ValidateItem | string)[]>('validate', defaultLanguages);
 								for (let item of validateItems) {
 									if (Is.string(item) && item === document.languageId) {
 										settings.validate = true;
-										if (item === 'javascript' || item === 'javascriptreact') {
+										if (defaultLanguages.indexOf(item) > -1) {
 											settings.autoFix = true;
 										}
 										break;
