@@ -15,8 +15,8 @@ import {
 	ExecuteCommandRequest, DidChangeWatchedFilesNotification, DidChangeConfigurationNotification,
 	Proposed, ProposedFeatures
 } from 'vscode-languageserver';
-type LinterValues = 'standard' | 'semistandard' | 'standardx';
-type LinterNameValues = 'JavaScript Standard Style' | 'JavaScript Semi-Standard Style' | 'JavaScript Standard Style with custom tweaks';
+type LinterValues = 'standard' | 'semistandard' | 'standardx' | 'ts-standard';
+type LinterNameValues = 'JavaScript Standard Style' | 'JavaScript Semi-Standard Style' | 'JavaScript Standard Style with custom tweaks' | 'TypeScript Standard Style';
 
 import Uri from 'vscode-uri';
 import path = require('path');
@@ -317,7 +317,8 @@ function resolveSettings(document: TextDocument): Thenable<TextDocumentSettings>
 		let linterNames: { [linter: string]: LinterNameValues; } = {
 			'standard': 'JavaScript Standard Style',
 			'semistandard': 'JavaScript Semi-Standard Style',
-			'standardx': 'JavaScript Standard Style with custom tweaks'
+			'standardx': 'JavaScript Standard Style with custom tweaks',
+			'ts-standard': 'TypeScript Standard Style'
 		}
 		let linter = settings.engine;
 		let linterName = linterNames[settings.engine];
@@ -344,11 +345,15 @@ function resolveSettings(document: TextDocument): Thenable<TextDocumentSettings>
 				} else if (pkg && pkg.devDependencies && pkg.devDependencies.standardx) {
 					linter = 'standardx';
 					linterName = 'JavaScript Standard Style with custom tweaks';
+				} else if (pkg && pkg.devDependencies && pkg.devDependencies['ts-standard']) {
+					linter = 'ts-standard';
+					linterName = 'TypeScript Standard Style';
 				}
-				// if standard, semistandard or standardx config presented in package.json
+				// if standard, semistandard, standardx, ts-standard config presented in package.json
 				if (pkg && pkg.devDependencies && pkg.devDependencies.standard
 					|| pkg && pkg.devDependencies && pkg.devDependencies.semistandard
-					|| pkg && pkg.devDependencies && pkg.devDependencies.standardx) {
+					|| pkg && pkg.devDependencies && pkg.devDependencies.standardx
+					|| pkg && pkg.devDependencies && pkg.devDependencies['ts-standard']) {
 					if (pkg[linter]) {
 						// if [linter] presented in package.json
 						// combine the global one.
