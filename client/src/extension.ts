@@ -213,18 +213,18 @@ export function activate(context: ExtensionContext) {
 		}
 	}
 	function configurationChanged() {
-		if (activated) {
-			return;
-		}
-		for (let textDocument of Workspace.textDocuments) {
-			if (shouldBeValidated(textDocument)) {
-				openListener.dispose();
-				configurationListener.dispose();
-				activated = true;
-				realActivate(context);
-				return;
+		if (!activated) {
+			for (let textDocument of Workspace.textDocuments) {
+				if (shouldBeValidated(textDocument)) {
+					openListener.dispose();
+					configurationListener.dispose();
+					activated = true;
+					realActivate(context);
+					break;
+				}
 			}
 		}
+		Commands.executeCommand('setContext', 'standardEnabled', activated);
 	}
 	openListener = Workspace.onDidOpenTextDocument(didOpenTextDocument);
 	configurationListener = Workspace.onDidChangeConfiguration(configurationChanged);
