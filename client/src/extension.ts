@@ -197,6 +197,11 @@ function shouldBeValidated(textDocument: TextDocument): boolean {
 	return false;
 }
 
+function contextStandardChange(): void {
+	let enabled = Window.activeTextEditor && Window.activeTextEditor.document && shouldBeValidated(Window.activeTextEditor.document);
+    Commands.executeCommand('setContext', 'standardEnabled', enabled);
+}
+
 export function activate(context: ExtensionContext) {
 	let activated: boolean;
 	let openListener: Disposable;
@@ -213,18 +218,18 @@ export function activate(context: ExtensionContext) {
 		}
 	}
 	function configurationChanged() {
-		if (!activated) {
-			for (let textDocument of Workspace.textDocuments) {
-				if (shouldBeValidated(textDocument)) {
-					openListener.dispose();
-					configurationListener.dispose();
-					activated = true;
-					realActivate(context);
-					break;
-				}
+		if (activated) {
+			return;
+		}
+		for (let textDocument of Workspace.textDocuments) {
+			if (shouldBeValidated(textDocument)) {
+				openListener.dispose();
+				configurationListener.dispose();
+				activated = true;
+				realActivate(context);
+				break;
 			}
 		}
-		Commands.executeCommand('setContext', 'standardEnabled', activated);
 	}
 	openListener = Workspace.onDidOpenTextDocument(didOpenTextDocument);
 	configurationListener = Workspace.onDidChangeConfiguration(configurationChanged);
@@ -288,7 +293,9 @@ export function realActivate(context: ExtensionContext) {
 		}
 
 		Window.onDidChangeActiveTextEditor(updateStatusBarVisibility);
+		Window.onDidChangeActiveTextEditor(contextStandardChange);
 		updateStatusBarVisibility(Window.activeTextEditor);
+		contextStandardChange()
 
 		// We need to go one level up since an extension compile the js code into
 		// the output folder.
@@ -307,6 +314,7 @@ export function realActivate(context: ExtensionContext) {
 		let syncedDocuments: Map<string, TextDocument> = new Map<string, TextDocument>();
 
 		Workspace.onDidChangeConfiguration(() => {
+			contextStandardChange()
 			for (let textDocument of syncedDocuments.values()) {
 				if (!shouldBeValidated(textDocument)) {
 					syncedDocuments.delete(textDocument.uri.toString());
