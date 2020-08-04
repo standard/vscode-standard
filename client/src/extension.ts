@@ -17,8 +17,8 @@ import {
 	ServerOptions, Proposed, DocumentFilter, DidCloseTextDocumentNotification, DidOpenTextDocumentNotification,
 	CancellationToken, WorkspaceMiddleware
 } from 'vscode-languageclient';
-type LinterValues = 'standard' | 'semistandard' | 'standardx';
-type LinterNameValues = 'JavaScript Standard Style' | 'JavaScript Semi-Standard Style' | 'JavaScript Standard Style with custom tweaks';
+type LinterValues = 'standard' | 'semistandard' | 'standardx' | 'ts-standard';
+type LinterNameValues = 'JavaScript Standard Style' | 'JavaScript Semi-Standard Style' | 'JavaScript Standard Style with custom tweaks' | 'TypeScript Standard Style';
 var linterName: LinterNameValues;
 
 namespace Is {
@@ -113,7 +113,8 @@ function getLinterName() {
 	let linterNames: { [linter: string]: LinterNameValues; } = {
 		'standard': 'JavaScript Standard Style',
 		'semistandard': 'JavaScript Semi-Standard Style',
-		'standardx': 'JavaScript Standard Style with custom tweaks'
+		'standardx': 'JavaScript Standard Style with custom tweaks',
+		'ts-standard': 'TypeScript Standard Style'
 	}
 	return linterNames[configuration.get<LinterValues>('engine', 'standard')];
 }
