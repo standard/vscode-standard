@@ -114,6 +114,18 @@ When you open the Command Palette in VSCode (⇧⌘P or Ctrl+Shift+P), this plug
 	}
 	```
 
+2. How to use it with a keybinding?
+
+    We provide a clause context `standardEnabled`. You can use it in a keybinding to run standard only when is necessary:
+
+    ```json
+    {
+      "key": "ctrl+shift+i",
+      "command": "standard.executeAutofix",
+      "when": "standardEnabled && editorTextFocus && !editorReadonly"
+    }
+    ```
+
 ## How to develop
 
 1. Fork this repo, and clone your fork locally.
