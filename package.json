@@ -21,6 +21,8 @@
   "keywords": [
     "javascript",
     "javascriptreact",
+    "typescript",
+    "typescriptreact",
     "vue"
   ],
   "engines": {
@@ -68,10 +70,11 @@
           "enum": [
             "standard",
             "semistandard",
-            "standardx"
+            "standardx",
+            "ts-standard"
           ],
           "default": "standard",
-          "description": "Controls whether VSCode should use an alternate Standard engine, like semistandard or standardx."
+          "description": "Controls whether VSCode should use an alternate Standard engine, like semistandard, standardx or ts-standard."
         },
         "standard.trace.server": {
           "scope": "window",

@@ -6,6 +6,8 @@ We support [JavaScript Semi-Standard Style](https://github.com/Flet/semistandard
 
 [JavaScript Standard Style with custom tweaks](https://github.com/standard/standardx) is also supported if you want to fine-tune your ESLint config while keeping the power of Standard.
 
+This plugin also works with [TypeScript Standard Style][https://github.com/toddbluhm/ts-standard] which has additonal rules for TypeScript based projects.
+
 ## How to use
 
 1. **Install the 'JavaScript Standard Style' extension**
@@ -14,7 +16,7 @@ We support [JavaScript Semi-Standard Style](https://github.com/Flet/semistandard
 
 	You will need to reload VSCode before new extensions can be used.
 
-2. **Install `standard`, `semistandard` or `standardx`**
+2. **Install `standard`, `semistandard`, `standardx` or `ts-standard`**
 
 	This can be done globally or locally. We recommend that you install them locally (i.e. saved in your project's `devDependencies`), to ensure that other developers have it installed when working on the project.
 
@@ -34,7 +36,7 @@ Option|Description|Default
 `standard.nodePath`|use this setting if an installed `standard` package can't be detected.|`null`
 `standard.validate`|an array of language identifiers specify the files to be validated|`["javascript", "javascriptreact", "typescript", "typescriptreact]`
 `standard.workingDirectories`|an array for working directories to be used.|`[]`
-`standard.engine`|You can use `semistandard` or `standardx` instead of `standard`. **Just make sure you've installed the `semistandard` or the `standardx` package, instead of `standard`.**|`standard`
+`standard.engine`|You can use `semistandard`, `standardx` or `ts-standard` instead of `standard`. **Just make sure you've installed the `semistandard`, the `standardx` or the `ts-standard` package, instead of `standard`.**|`standard`
 `standard.usePackageJson`|if set to `true`, JavaScript Standard Style will use project's `package.json` settings, otherwise globally installed `standard` module is used |`false`
 
 
