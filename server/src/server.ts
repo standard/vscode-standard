@@ -775,6 +775,10 @@ function validate(document: TextDocument, settings: TextDocumentSettings, publis
 			cwd: opts.cwd,
 			configKey: settings.engine
 		}
+
+		// Detect brackets in filename.
+		file = file.replace(']','[]]').replace('/[','/[[]');
+
 		async.waterfall([
 			function (callback: any) {
 				// Clean previously computed code actions.
