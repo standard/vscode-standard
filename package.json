@@ -205,7 +205,7 @@
     "package": "vsce package"
   },
   "devDependencies": {
-    "@types/node": "^6.0.88",
+    "@types/node": "6.0.88",
     "typescript": "^2.4.2",
     "vsce": "^1.44.0"
   },
