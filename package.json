@@ -26,7 +26,7 @@
     "vue"
   ],
   "engines": {
-    "vscode": "^1.16.0"
+    "vscode": "^1.50.0"
   },
   "activationEvents": [
     "*"
@@ -195,21 +195,18 @@
     ]
   },
   "scripts": {
-    "vscode:prepublishs": "cd client && npm run update-vscode && cd .. && npm run compile",
-    "compile:client": "tsc -p ./client/tsconfig.json",
-    "compile:server": "tsc -p ./server/tsconfig.json",
-    "watch:client": "tsc -w -p ./client/tsconfig.json",
-    "watch:server": "tsc -w -p ./server/tsconfig.json",
-    "compile": "npm run compile:client && npm run compile:server",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -b",
+    "watch": "tsc -b -w",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "package": "vsce package"
   },
   "devDependencies": {
-    "@types/node": "6.0.88",
-    "typescript": "^2.4.2",
-    "vsce": "^1.44.0"
+    "@types/node": "14.14.6",
+    "typescript": "^4.0.5",
+    "vsce": "^1.81.1"
   },
   "dependencies": {
-    "async": "^2.5.0"
+    "async": "^3.2.0"
   }
 }
