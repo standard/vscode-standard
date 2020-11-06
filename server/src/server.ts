@@ -35,11 +35,12 @@ import {
   VersionedTextDocumentIdentifier
 } from 'vscode-languageserver'
 import {
-  WorkspaceFolder,
   WorkspaceChange
 } from 'vscode-languageserver-protocol'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
+import * as deglob from 'deglob'
+import * as async from 'async'
 
 type LinterValues = 'standard' | 'semistandard' | 'standardx' | 'ts-standard'
 type LinterNameValues =
@@ -47,9 +48,6 @@ type LinterNameValues =
   | 'JavaScript Semi-Standard Style'
   | 'JavaScript Standard Style with custom tweaks'
   | 'TypeScript Standard Style'
-
-const deglob = require('deglob')
-const async = require('async')
 
 namespace Is {
   const toString = Object.prototype.toString
@@ -102,10 +100,10 @@ interface NoConfigResult {}
 
 namespace NoConfigRequest {
   export const type = new RequestType<
-    NoConfigParams,
-    NoConfigResult,
-    void,
-    void
+  NoConfigParams,
+  NoConfigResult,
+  void,
+  void
   >('standard/noConfig')
 }
 
@@ -117,10 +115,10 @@ interface NoStandardLibraryResult {}
 
 namespace NoStandardLibraryRequest {
   export const type = new RequestType<
-    NoStandardLibraryParams,
-    NoStandardLibraryResult,
-    void,
-    void
+  NoStandardLibraryParams,
+  NoStandardLibraryResult,
+  void,
+  void
   >('standard/noLibrary')
 }
 
@@ -133,7 +131,7 @@ interface DirectoryItem {
 
 namespace DirectoryItem {
   export function is (item: any): item is DirectoryItem {
-    let candidate = item as DirectoryItem
+    const candidate = item as DirectoryItem
     return (
       candidate &&
       Is.string(candidate.directory) &&
@@ -152,7 +150,7 @@ interface TextDocumentSettings {
   options: any | undefined
   run: RunValues
   nodePath: string | undefined
-  workspaceFolder: { name: string; uri: URI } | undefined
+  workspaceFolder: { name: string, uri: URI } | undefined
   workingDirectory: DirectoryItem | undefined
   library: StandardModule | undefined
 }
@@ -197,31 +195,29 @@ interface CLIOptions {
   parser: string
 }
 
-interface StandardModuleCallback {
-  (error: Object, results: StanardReport): void
-}
+type StandardModuleCallback = (error: Object, results: StanardReport) => void
 interface Opts {
   ignore?: string[]
   cwd?: string
 }
 interface StandardModule {
-  lintText(text: string, opts?: CLIOptions, cb?: StandardModuleCallback): void
-  parseOpts(opts: Object): Opts
+  lintText: (text: string, opts?: CLIOptions, cb?: StandardModuleCallback) => void
+  parseOpts: (opts: Object) => Opts
 }
 
 function makeDiagnostic (
   problem: StandardProblem,
   source: LinterValues
 ): Diagnostic {
-  let message =
+  const message =
     problem.ruleId != null
       ? `${problem.message} (${problem.ruleId})`
       : `${problem.message}`
-  let startLine = Math.max(0, problem.line - 1)
-  let startChar = Math.max(0, problem.column - 1)
-  let endLine =
+  const startLine = Math.max(0, problem.line - 1)
+  const startChar = Math.max(0, problem.column - 1)
+  const endLine =
     problem.endLine != null ? Math.max(0, problem.endLine - 1) : startLine
-  let endChar =
+  const endChar =
     problem.endColumn != null ? Math.max(0, problem.endColumn - 1) : startChar
   return {
     message: message,
@@ -243,13 +239,13 @@ interface AutoFix {
 }
 
 function computeKey (diagnostic: Diagnostic): string {
-  let range = diagnostic.range
+  const range = diagnostic.range
   return `[${range.start.line},${range.start.character},${range.end.line},${range.end.character}]-${diagnostic.code}`
 }
 
-let codeActions: Map<string, Map<string, AutoFix>> = new Map<
-  string,
-  Map<string, AutoFix>
+const codeActions: Map<string, Map<string, AutoFix>> = new Map<
+string,
+Map<string, AutoFix>
 >()
 function recordCodeAction (
   document: TextDocument,
@@ -259,7 +255,7 @@ function recordCodeAction (
   if (!problem.fix || !problem.ruleId) {
     return
   }
-  let uri = document.uri
+  const uri = document.uri
   let edits: Map<string, AutoFix> = codeActions.get(uri)!
   if (!edits) {
     edits = new Map<string, AutoFix>()
@@ -319,7 +315,7 @@ function isUNC (path: string): boolean {
     return false
   }
   let pos = 2
-  let start = pos
+  const start = pos
   for (; pos < path.length; pos++) {
     code = path.charCodeAt(pos)
     if (code === CharCode.Backslash) {
@@ -340,7 +336,7 @@ function getFilePath (documentOrUri: string | URI): string {
   if (!documentOrUri) {
     return ''
   }
-  let uri = Is.string(documentOrUri) ? URI.parse(documentOrUri) : documentOrUri
+  const uri = Is.string(documentOrUri) ? URI.parse(documentOrUri) : documentOrUri
   if (uri.scheme !== 'file') {
     return ''
   }
@@ -353,35 +349,35 @@ const exitCalled = new NotificationType<[number, string], void>(
 
 const nodeExit = process.exit
 process.on('SIGINT', () => {
-  let stack = new Error('stack')
+  const stack = new Error('stack')
   connection.sendNotification(exitCalled, [0, stack.stack])
   setTimeout(() => {
     nodeExit(0)
   }, 1000)
 })
 
-let connection = createConnection(
+const connection = createConnection(
   ProposedFeatures.all,
   new IPCMessageReader(process),
   new IPCMessageWriter(process)
 )
-let documents = new TextDocuments(TextDocument)
+const documents = new TextDocuments(TextDocument)
 
-let globalNodePath: string | undefined = undefined
+let globalNodePath: string | undefined
 
-let path2Library: Map<string, StandardModule> = new Map<
-  string,
-  StandardModule
+const path2Library: Map<string, StandardModule> = new Map<
+string,
+StandardModule
 >()
-let document2Settings: Map<string, Thenable<TextDocumentSettings>> = new Map<
-  string,
-  Thenable<TextDocumentSettings>
+const document2Settings: Map<string, Thenable<TextDocumentSettings>> = new Map<
+string,
+Thenable<TextDocumentSettings>
 >()
 
 function resolveSettings (
   document: TextDocument
 ): Thenable<TextDocumentSettings> {
-  let uri = document.uri
+  const uri = document.uri
   let resultPromise = document2Settings.get(uri)
   if (resultPromise) {
     return resultPromise
@@ -389,8 +385,8 @@ function resolveSettings (
   resultPromise = connection.workspace
     .getConfiguration({ scopeUri: uri, section: '' })
     .then((settings: TextDocumentSettings) => {
-      let uri = URI.parse(document.uri)
-      let linterNames: { [linter: string]: LinterNameValues } = {
+      const uri = URI.parse(document.uri)
+      const linterNames: { [linter: string]: LinterNameValues } = {
         standard: 'JavaScript Standard Style',
         semistandard: 'JavaScript Semi-Standard Style',
         standardx: 'JavaScript Standard Style with custom tweaks',
@@ -400,7 +396,7 @@ function resolveSettings (
       let linterName = linterNames[settings.engine]
       // when settings.usePackageJson is true
       // we need to do more
-      let { usePackageJson } = settings
+      const { usePackageJson } = settings
       // when we open single file not under project,
       // that workingspaceFolder would be undefined
       if (
@@ -408,14 +404,14 @@ function resolveSettings (
         settings.workspaceFolder != null &&
         settings.workspaceFolder.uri != null
       ) {
-        let pkgPath = path.join(
+        const pkgPath = path.join(
           getFilePath(settings.workspaceFolder.uri),
           'package.json'
         )
-        let pkgExists = fs.existsSync(pkgPath)
+        const pkgExists = fs.existsSync(pkgPath)
         if (pkgExists) {
-          let pkgStr = fs.readFileSync(pkgPath, 'utf8')
-          let pkg = JSON.parse(pkgStr)
+          const pkgStr = fs.readFileSync(pkgPath, 'utf8')
+          const pkg = JSON.parse(pkgStr)
           if (pkg && pkg.devDependencies && pkg.devDependencies.standard) {
             linter = 'standard'
             linterName = 'JavaScript Standard Style'
@@ -469,8 +465,8 @@ function resolveSettings (
       }
       let promise: Thenable<string>
       if (uri.scheme === 'file') {
-        let file = uri.fsPath
-        let directory = path.dirname(file)
+        const file = uri.fsPath
+        const directory = path.dirname(file)
         if (settings.nodePath) {
           promise = Files.resolve(
             linter,
@@ -539,7 +535,7 @@ interface Request<P, R> {
 
 namespace Request {
   export function is (value: any): value is Request<any, any> {
-    let candidate: Request<any, any> = value
+    const candidate: Request<any, any> = value
     return (
       candidate &&
       !!candidate.token &&
@@ -557,36 +553,36 @@ interface Notifcation<P> {
 
 type Message<P, R> = Notifcation<P> | Request<P, R>
 
-interface VersionProvider<P> {
-  (params: P): number
-}
+type VersionProvider<P> = (params: P) => number
 
 namespace Thenable {
   export function is<T> (value: any): value is Thenable<T> {
-    let candidate: Thenable<T> = value
+    const candidate: Thenable<T> = value
     return candidate && typeof candidate.then === 'function'
   }
 }
 
 class BufferedMessageQueue {
-  private queue: Message<any, any>[]
-  private requestHandlers: Map<
-    string,
-    {
-      handler: RequestHandler<any, any, any>
-      versionProvider?: VersionProvider<any>
-    }
+  private readonly queue: Array<Message<any, any>>
+  private readonly requestHandlers: Map<
+  string,
+  {
+    handler: RequestHandler<any, any, any>
+    versionProvider?: VersionProvider<any>
+  }
   >
-  private notificationHandlers: Map<
-    string,
-    {
-      handler: NotificationHandler<any>
-      versionProvider?: VersionProvider<any>
-    }
+
+  private readonly notificationHandlers: Map<
+  string,
+  {
+    handler: NotificationHandler<any>
+    versionProvider?: VersionProvider<any>
+  }
   >
+
   private timer: NodeJS.Timer | undefined
 
-  constructor (private connection: IConnection) {
+  constructor (private readonly connection: IConnection) {
     this.queue = []
     this.requestHandlers = new Map()
     this.notificationHandlers = new Map()
@@ -657,7 +653,7 @@ class BufferedMessageQueue {
     if (this.timer != null || this.queue.length === 0) {
       return
     }
-    // @ts-ignore next-line
+    // @ts-expect-error next-line
     this.timer = setImmediate(() => {
       this.timer = undefined
       this.processQueue()
@@ -665,12 +661,12 @@ class BufferedMessageQueue {
   }
 
   private processQueue (): void {
-    let message = this.queue.shift()
+    const message = this.queue.shift()
     if (!message) {
       return
     }
     if (Request.is(message)) {
-      let requestMessage = message
+      const requestMessage = message
       if (
         requestMessage.token != null &&
         requestMessage.token.isCancellationRequested
@@ -683,7 +679,7 @@ class BufferedMessageQueue {
         )
         return
       }
-      let elem = this.requestHandlers.get(requestMessage.method)
+      const elem = this.requestHandlers.get(requestMessage.method)
       if (elem == null) {
         return
       }
@@ -701,7 +697,7 @@ class BufferedMessageQueue {
         )
         return
       }
-      let result = elem.handler(requestMessage.params, requestMessage.token!)
+      const result = elem.handler(requestMessage.params, requestMessage.token!)
       if (Thenable.is(result)) {
         result.then(
           value => {
@@ -715,8 +711,8 @@ class BufferedMessageQueue {
         requestMessage.resolve(result)
       }
     } else {
-      let notificationMessage = message
-      let elem = this.notificationHandlers.get(notificationMessage.method)
+      const notificationMessage = message
+      const elem = this.notificationHandlers.get(notificationMessage.method)
       if (
         elem != null &&
         elem.versionProvider &&
@@ -734,12 +730,12 @@ class BufferedMessageQueue {
   }
 }
 
-let messageQueue: BufferedMessageQueue = new BufferedMessageQueue(connection)
+const messageQueue: BufferedMessageQueue = new BufferedMessageQueue(connection)
 
 namespace ValidateNotification {
   export const type: NotificationType<
-    TextDocument,
-    void
+  TextDocument,
+  void
   > = new NotificationType<TextDocument, void>('standard/validate')
 }
 
@@ -786,8 +782,8 @@ documents.onDidChangeContent(event => {
 })
 
 function getFixes (textDocument: TextDocument): TextEdit[] {
-  let uri = textDocument.uri
-  let edits = codeActions.get(uri)
+  const uri = textDocument.uri
+  const edits = codeActions.get(uri)
   function createTextEdit (editInfo: AutoFix): TextEdit {
     return TextEdit.replace(
       Range.create(
@@ -798,7 +794,7 @@ function getFixes (textDocument: TextDocument): TextEdit[] {
     )
   }
   if (edits) {
-    let fixes = new Fixes(edits)
+    const fixes = new Fixes(edits)
     if (
       fixes.isEmpty() ||
       textDocument.version !== fixes.getDocumentVersion()
@@ -815,7 +811,7 @@ documents.onWillSaveWaitUntil(event => {
     return []
   }
 
-  let document = event.document
+  const document = event.document
   return resolveSettings(document).then(settings => {
     if (!settings.autoFixOnSave) {
       return []
@@ -847,7 +843,7 @@ documents.onDidSave(event => {
 
 documents.onDidClose(event => {
   resolveSettings(event.document).then(settings => {
-    let uri = event.document.uri
+    const uri = event.document.uri
     document2Settings.delete(uri)
     codeActions.delete(uri)
     if (settings.validate) {
@@ -858,7 +854,7 @@ documents.onDidClose(event => {
 
 function environmentChanged () {
   document2Settings.clear()
-  for (let document of documents.all()) {
+  for (const document of documents.all()) {
     messageQueue.addNotificationMessage(
       ValidateNotification.type,
       document,
@@ -918,11 +914,11 @@ messageQueue.registerNotification(
   }
 )
 
-const singleErrorHandlers: ((
+const singleErrorHandlers: Array<(
   error: any,
   document: TextDocument,
   library: StandardModule | undefined
-) => Status | undefined)[] = [
+) => Status | undefined> = [
   tryHandleNoConfig,
   tryHandleConfigError,
   tryHandleMissingModule,
@@ -946,8 +942,8 @@ function validateSingle (
       validate(document, settings, publishDiagnostics)
       connection.sendNotification(StatusNotification.type, { state: Status.ok })
     } catch (err) {
-      let status = undefined
-      for (let handler of singleErrorHandlers) {
+      let status
+      for (const handler of singleErrorHandlers) {
         status = handler(err, document, settings.library)
         if (status) {
           break
@@ -988,33 +984,32 @@ function validate (
   settings: TextDocumentSettings,
   publishDiagnostics: boolean = true
 ): void {
-  let uri = document.uri
+  const uri = document.uri
   // filename is needed,
   // or eslint processText will fail to load the plugins
-  let newOptions: CLIOptions = Object.assign(
+  const newOptions: CLIOptions = Object.assign(
     Object.create(null),
     { filename: uri },
     settings.options
   )
-  let content = document.getText()
-  let file = getFilePath(uri)
-  let cwd = process.cwd()
+  const content = document.getText()
+  const file = getFilePath(uri)
+  const cwd = process.cwd()
   try {
-    if (file) {
+    if (file !== '') {
       if (settings.workingDirectory != null) {
         newOptions.cwd = settings.workingDirectory.directory
         if (settings.workingDirectory.changeProcessCWD) {
           process.chdir(settings.workingDirectory.directory)
         }
-        //@ts-ignore nxt-line
       } else if (settings.workspaceFolder) {
-        let workspaceFolderUri = settings.workspaceFolder.uri
+        const workspaceFolderUri = settings.workspaceFolder.uri
         if (workspaceFolderUri.scheme === 'file') {
           newOptions.cwd = workspaceFolderUri.fsPath
-          process.chdir(settings.workspaceFolder.uri.fsPath)
+          process.chdir(workspaceFolderUri.fsPath)
         }
       } else if (!settings.workspaceFolder && !isUNC(file)) {
-        let directory = path.dirname(file)
+        const directory = path.dirname(file)
         if (directory) {
           if (path.isAbsolute(directory)) {
             newOptions.cwd = directory
@@ -1071,18 +1066,18 @@ function validate (
           }
         },
         function (report: StanardReport, callback: any) {
-          let diagnostics: Diagnostic[] = []
+          const diagnostics: Diagnostic[] = []
           if (
             report &&
             report.results &&
             Array.isArray(report.results) &&
             report.results.length > 0
           ) {
-            let docReport = report.results[0]
+            const docReport = report.results[0]
             if (docReport.messages && Array.isArray(docReport.messages)) {
               docReport.messages.forEach(problem => {
                 if (problem) {
-                  let diagnostic = makeDiagnostic(problem, settings.engine)
+                  const diagnostic = makeDiagnostic(problem, settings.engine)
                   diagnostics.push(diagnostic)
                   if (settings.autoFix) {
                     recordCodeAction(document, diagnostic, problem)
@@ -1113,12 +1108,12 @@ function validate (
 }
 
 let noConfigReported: Map<string, StandardModule | undefined> = new Map<
-  string,
-  StandardModule
+string,
+StandardModule
 >()
 
 function isNoConfigFoundError (error: any): boolean {
-  let candidate = error as StandardError
+  const candidate = error as StandardError
   return (
     candidate.messageTemplate === 'no-config-found' ||
     candidate.message === 'No ESLint configuration found.'
@@ -1147,9 +1142,9 @@ function tryHandleNoConfig (
   return Status.warn
 }
 
-let configErrorReported: Map<string, StandardModule | undefined> = new Map<
-  string,
-  StandardModule
+const configErrorReported: Map<string, StandardModule | undefined> = new Map<
+string,
+StandardModule
 >()
 
 function tryHandleConfigError (
@@ -1195,8 +1190,8 @@ function tryHandleConfigError (
 }
 
 let missingModuleReported: Map<string, StandardModule> = new Map<
-  string,
-  StandardModule
+string,
+StandardModule
 >()
 
 function tryHandleMissingModule (
@@ -1214,16 +1209,16 @@ function tryHandleMissingModule (
     error: StandardError
   ): Status {
     if (!missingModuleReported.has(plugin)) {
-      let fsPath = getFilePath(document.uri)
+      const fsPath = getFilePath(document.uri)
       missingModuleReported.set(plugin, library!)
       if (error.messageTemplate === 'plugin-missing') {
         connection.console.error(
           [
             '',
             `${error.message.toString()}`,
-            `Happend while validating ${fsPath ? fsPath : document.uri}`,
-            `This can happen for a couple of reasons:`,
-            `1. The plugin name is spelled incorrectly in JavaScript Standard Style configuration.`,
+            `Happend while validating ${fsPath || document.uri}`,
+            'This can happen for a couple of reasons:',
+            '1. The plugin name is spelled incorrectly in JavaScript Standard Style configuration.',
             `2. If JavaScript Standard Style is installed globally, then make sure ${module} is installed globally as well.`,
             `3. If JavaScript Standard Style is installed locally, then ${module} isn't installed correctly.`
           ].join('\n')
@@ -1232,7 +1227,7 @@ function tryHandleMissingModule (
         connection.console.error(
           [
             `${error.message.toString()}`,
-            `Happend while validating ${fsPath ? fsPath : document.uri}`
+            `Happend while validating ${fsPath || document.uri}`
           ].join('\n')
         )
       }
@@ -1240,7 +1235,7 @@ function tryHandleMissingModule (
     return Status.warn
   }
 
-  let matches = /Failed to load plugin (.*): Cannot find module (.*)/.exec(
+  const matches = /Failed to load plugin (.*): Cannot find module (.*)/.exec(
     error.message
   )
   if (matches && matches.length === 3) {
@@ -1263,13 +1258,13 @@ messageQueue.registerNotification(
     noConfigReported = Object.create(null)
     missingModuleReported = Object.create(null)
     params.changes.forEach((change: any) => {
-      let fsPath = getFilePath(change.uri)
+      const fsPath = getFilePath(change.uri)
       if (!fsPath || isUNC(fsPath)) {
         return
       }
-      let dirname = path.dirname(fsPath)
+      const dirname = path.dirname(fsPath)
       if (dirname) {
-        let library = configErrorReported.get(fsPath)
+        const library = configErrorReported.get(fsPath)
         if (library) {
           try {
             library.lintText('')
@@ -1283,7 +1278,7 @@ messageQueue.registerNotification(
 )
 
 class Fixes {
-  constructor (private edits: Map<string, AutoFix>) {}
+  constructor (private readonly edits: Map<string, AutoFix>) {}
 
   public static overlaps (lastEdit: AutoFix, newEdit: AutoFix): boolean {
     return !!lastEdit && lastEdit.edit.range[1] > newEdit.edit.range[0]
@@ -1301,10 +1296,10 @@ class Fixes {
   }
 
   public getScoped (diagnostics: Diagnostic[]): AutoFix[] {
-    let result: AutoFix[] = []
-    for (let diagnostic of diagnostics) {
-      let key = computeKey(diagnostic)
-      let editInfo = this.edits.get(key)
+    const result: AutoFix[] = []
+    for (const diagnostic of diagnostics) {
+      const key = computeKey(diagnostic)
+      const editInfo = this.edits.get(key)
       if (editInfo) {
         result.push(editInfo)
       }
@@ -1313,10 +1308,10 @@ class Fixes {
   }
 
   public getAllSorted (): AutoFix[] {
-    let result: AutoFix[] = []
+    const result: AutoFix[] = []
     this.edits.forEach(value => result.push(value))
     return result.sort((a, b) => {
-      let d = a.edit.range[0] - b.edit.range[0]
+      const d = a.edit.range[0] - b.edit.range[0]
       if (d !== 0) {
         return d
       }
@@ -1331,15 +1326,15 @@ class Fixes {
   }
 
   public getOverlapFree (): AutoFix[] {
-    let sorted = this.getAllSorted()
+    const sorted = this.getAllSorted()
     if (sorted.length <= 1) {
       return sorted
     }
-    let result: AutoFix[] = []
+    const result: AutoFix[] = []
     let last: AutoFix = sorted[0]
     result.push(last)
     for (let i = 1; i < sorted.length; i++) {
-      let current = sorted[i]
+      const current = sorted[i]
       if (!Fixes.overlaps(last, current)) {
         result.push(current)
         last = current
@@ -1354,19 +1349,19 @@ messageQueue.registerRequest(
   CodeActionRequest.type,
   params => {
     commands = new Map<string, WorkspaceChange>()
-    let result: Command[] = []
-    let uri = params.textDocument.uri
-    let edits = codeActions.get(uri)
+    const result: Command[] = []
+    const uri = params.textDocument.uri
+    const edits = codeActions.get(uri)
     if (!edits) {
       return result
     }
 
-    let fixes = new Fixes(edits)
+    const fixes = new Fixes(edits)
     if (fixes.isEmpty()) {
       return result
     }
 
-    let textDocument = documents.get(uri)
+    const textDocument = documents.get(uri)
     let documentVersion: number = -1
     let ruleId: string
 
@@ -1390,7 +1385,7 @@ messageQueue.registerRequest(
     for (const editInfo of fixes.getScoped(params.context.diagnostics)) {
       documentVersion = editInfo.documentVersion
       ruleId = editInfo.ruleId
-      let workspaceChange = new WorkspaceChange()
+      const workspaceChange = new WorkspaceChange()
       if (editInfo != null) {
         workspaceChange
           .getTextEditChange({ uri, version: documentVersion })
@@ -1401,10 +1396,10 @@ messageQueue.registerRequest(
     }
 
     if (result.length > 0) {
-      let same: AutoFix[] = []
-      let all: AutoFix[] = []
+      const same: AutoFix[] = []
+      const all: AutoFix[] = []
 
-      for (let editInfo of fixes.getAllSorted()) {
+      for (const editInfo of fixes.getAllSorted()) {
         if (documentVersion === -1) {
           documentVersion = editInfo.documentVersion
         }
@@ -1419,8 +1414,8 @@ messageQueue.registerRequest(
         }
       }
       if (same.length > 1) {
-        let sameFixes: WorkspaceChange = new WorkspaceChange()
-        let sameTextChange = sameFixes.getTextEditChange({
+        const sameFixes: WorkspaceChange = new WorkspaceChange()
+        const sameTextChange = sameFixes.getTextEditChange({
           uri,
           version: documentVersion
         })
@@ -1434,8 +1429,8 @@ messageQueue.registerRequest(
         )
       }
       if (all.length > 1) {
-        let allFixes: WorkspaceChange = new WorkspaceChange()
-        let allTextChange = allFixes.getTextEditChange({
+        const allFixes: WorkspaceChange = new WorkspaceChange()
+        const allTextChange = allFixes.getTextEditChange({
           uri,
           version: documentVersion
         })
@@ -1443,7 +1438,7 @@ messageQueue.registerRequest(
         commands.set(CommandIds.applyAllFixes, allFixes)
         result.push(
           Command.create(
-            `Fix all auto-fixable problems`,
+            'Fix all auto-fixable problems',
             CommandIds.applyAllFixes
           )
         )
@@ -1452,23 +1447,23 @@ messageQueue.registerRequest(
     return result
   },
   params => {
-    let document = documents.get(params.textDocument.uri)
+    const document = documents.get(params.textDocument.uri)
     return document ? document.version : 1
   }
 )
 
 function computeAllFixes (
   identifier: VersionedTextDocumentIdentifier
-): (TextEdit | undefined)[] | undefined {
-  let uri = identifier.uri
-  let textDocument = documents.get(uri)
+): Array<TextEdit | undefined> | undefined {
+  const uri = identifier.uri
+  const textDocument = documents.get(uri)
   if (!textDocument || identifier.version !== textDocument.version) {
     return undefined
   }
-  let edits = codeActions.get(uri)
+  const edits = codeActions.get(uri)
 
   if (edits) {
-    let fixes = new Fixes(edits)
+    const fixes = new Fixes(edits)
     if (!fixes.isEmpty()) {
       return fixes.getOverlapFree().map(editInfo => {
         if (textDocument == null) {
@@ -1492,11 +1487,11 @@ messageQueue.registerRequest(
   params => {
     let workspaceChange = new WorkspaceChange()
     if (params.command === CommandIds.applyAutoFix) {
-      let identifier: VersionedTextDocumentIdentifier = params.arguments[0]
-      let edits = computeAllFixes(identifier)
-      if (edits) {
+      const identifier: VersionedTextDocumentIdentifier = params.arguments[0]
+      const edits = computeAllFixes(identifier)
+      if (edits != null) {
         workspaceChange = new WorkspaceChange()
-        let textChange = workspaceChange.getTextEditChange(identifier)
+        const textChange = workspaceChange.getTextEditChange(identifier)
         edits.forEach(edit => textChange.add(edit!))
       }
     } else {

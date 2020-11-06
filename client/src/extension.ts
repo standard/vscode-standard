@@ -2,7 +2,6 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
-'use strict'
 import * as path from 'path'
 import {
   CodeActionContext,
@@ -40,7 +39,6 @@ import {
   VersionedTextDocumentIdentifier,
   WorkspaceMiddleware
 } from 'vscode-languageclient'
-
 import { URI } from 'vscode-uri'
 
 type LinterValues = 'standard' | 'semistandard' | 'standardx' | 'ts-standard'
@@ -70,7 +68,7 @@ interface ValidateItem {
 
 namespace ValidateItem {
   export function is (item: any): item is ValidateItem {
-    let candidate = item as ValidateItem
+    const candidate = item as ValidateItem
     return (
       candidate &&
       Is.string(candidate.language) &&
@@ -86,7 +84,7 @@ interface DirectoryItem {
 
 namespace DirectoryItem {
   export function is (item: any): item is DirectoryItem {
-    let candidate = item as DirectoryItem
+    const candidate = item as DirectoryItem
     return (
       candidate &&
       Is.string(candidate.directory) &&
@@ -141,10 +139,10 @@ interface NoStandardLibraryResult {}
 
 namespace NoStandardLibraryRequest {
   export const type = new RequestType<
-    NoStandardLibraryParams,
-    NoStandardLibraryResult,
-    void,
-    void
+  NoStandardLibraryParams,
+  NoStandardLibraryResult,
+  void,
+  void
   >('standard/noLibrary')
 }
 
@@ -156,8 +154,8 @@ interface WorkspaceFolderItem extends QuickPickItem {
   folder: VWorkspaceFolder
 }
 function getLinterName () {
-  let configuration = Workspace.getConfiguration('standard')
-  let linterNames: { [linter: string]: LinterNameValues } = {
+  const configuration = Workspace.getConfiguration('standard')
+  const linterNames: { [linter: string]: LinterNameValues } = {
     standard: 'JavaScript Standard Style',
     semistandard: 'JavaScript Semi-Standard Style',
     standardx: 'JavaScript Standard Style with custom tweaks',
@@ -190,14 +188,14 @@ function pickFolder (
 }
 
 function enable () {
-  let folders = Workspace.workspaceFolders
+  const folders = Workspace.workspaceFolders
   if (!folders) {
     Window.showWarningMessage(
       `${linterName} can only be enabled if VS Code is opened on a workspace folder.`
     )
     return
   }
-  let disabledFolders = folders.filter(
+  const disabledFolders = folders.filter(
     folder =>
       !Workspace.getConfiguration('standard', folder.uri).get('enable', true)
   )
@@ -225,14 +223,14 @@ function enable () {
 }
 
 function disable () {
-  let folders = Workspace.workspaceFolders
+  const folders = Workspace.workspaceFolders
   if (!folders) {
     Window.showErrorMessage(
       `${linterName} can only be disabled if VS Code is opened on a workspace folder.`
     )
     return
   }
-  let enabledFolders = folders.filter(folder =>
+  const enabledFolders = folders.filter(folder =>
     Workspace.getConfiguration('standard', folder.uri).get('enable', true)
   )
   if (enabledFolders.length === 0) {
@@ -260,22 +258,22 @@ function disable () {
 
 let dummyCommands: Disposable[]
 
-let defaultLanguages = [
+const defaultLanguages = [
   'javascript',
   'javascriptreact',
   'typescript',
   'typescriptreact'
 ]
 function shouldBeValidated (textDocument: TextDocument): boolean {
-  let config = Workspace.getConfiguration('standard', textDocument.uri)
+  const config = Workspace.getConfiguration('standard', textDocument.uri)
   if (!config.get('enable', true)) {
     return false
   }
-  let validate = config.get<(ValidateItem | string)[]>(
+  const validate = config.get<Array<ValidateItem | string>>(
     'validate',
     defaultLanguages
   )
-  for (let item of validate) {
+  for (const item of validate) {
     if (Is.string(item) && item === textDocument.languageId) {
       return true
     } else if (
@@ -305,7 +303,7 @@ export function activate (context: ExtensionContext) {
   }
   function configurationChanged () {
     if (!activated) {
-      for (let textDocument of Workspace.textDocuments) {
+      for (const textDocument of Workspace.textDocuments) {
         if (shouldBeValidated(textDocument)) {
           openListener.dispose()
           configurationListener.dispose()
@@ -322,7 +320,7 @@ export function activate (context: ExtensionContext) {
     configurationChanged
   )
 
-  let notValidating = () =>
+  const notValidating = () =>
     Window.showInformationMessage(
       `${linterName} is not validating any files yet.`
     )
@@ -341,7 +339,7 @@ export function activate (context: ExtensionContext) {
 export function realActivate (context: ExtensionContext) {
   linterName = getLinterName()
 
-  let statusBarItem = Window.createStatusBarItem(StatusBarAlignment.Right, 0)
+  const statusBarItem = Window.createStatusBarItem(StatusBarAlignment.Right, 0)
   let standardStatus: Status = Status.ok
   let serverRunning: boolean = false
 
@@ -378,7 +376,7 @@ export function realActivate (context: ExtensionContext) {
     showStatusBarItem(
       serverRunning &&
         (standardStatus !== Status.ok ||
-          (editor && defaultLanguages.indexOf(editor.document.languageId) > -1))
+          (editor && defaultLanguages.includes(editor.document.languageId)))
     )
   }
 
@@ -388,14 +386,14 @@ export function realActivate (context: ExtensionContext) {
   // We need to go one level up since an extension compile the js code into
   // the output folder.
   // serverModule
-  let serverModule = context.asAbsolutePath(
+  const serverModule = context.asAbsolutePath(
     path.join('server', 'out', 'server.js')
   )
-  let debugOptions = {
+  const debugOptions = {
     execArgv: ['--nolazy', '--inspect=6023'],
     cwd: process.cwd()
   }
-  let serverOptions: ServerOptions = {
+  const serverOptions: ServerOptions = {
     run: {
       module: serverModule,
       transport: TransportKind.ipc,
@@ -411,17 +409,17 @@ export function realActivate (context: ExtensionContext) {
   let defaultErrorHandler: ErrorHandler
   let serverCalledProcessExit: boolean = false
 
-  let packageJsonFilter: DocumentFilter = {
+  const packageJsonFilter: DocumentFilter = {
     scheme: 'file',
     pattern: '**/package.json'
   }
-  let syncedDocuments: Map<string, TextDocument> = new Map<
-    string,
-    TextDocument
+  const syncedDocuments: Map<string, TextDocument> = new Map<
+  string,
+  TextDocument
   >()
 
   Workspace.onDidChangeConfiguration(() => {
-    for (let textDocument of syncedDocuments.values()) {
+    for (const textDocument of syncedDocuments.values()) {
       if (!shouldBeValidated(textDocument)) {
         syncedDocuments.delete(textDocument.uri.toString())
         client.sendNotification(
@@ -430,7 +428,7 @@ export function realActivate (context: ExtensionContext) {
         )
       }
     }
-    for (let textDocument of Workspace.textDocuments) {
+    for (const textDocument of Workspace.textDocuments) {
       if (
         !syncedDocuments.has(textDocument.uri.toString()) &&
         shouldBeValidated(textDocument)
@@ -443,7 +441,7 @@ export function realActivate (context: ExtensionContext) {
       }
     }
   })
-  let clientOptions: LanguageClientOptions = {
+  const clientOptions: LanguageClientOptions = {
     documentSelector: [{ scheme: 'file' }, { scheme: 'untitled' }],
     diagnosticCollectionName: 'standard',
     revealOutputChannelOn: RevealOutputChannelOn.Never,
@@ -452,8 +450,8 @@ export function realActivate (context: ExtensionContext) {
       fileEvents: [Workspace.createFileSystemWatcher('**/package.json')]
     },
     initializationOptions: () => {
-      let configuration = Workspace.getConfiguration('standard')
-      let folders = Workspace.workspaceFolders
+      const configuration = Workspace.getConfiguration('standard')
+      const folders = Workspace.workspaceFolders
       return {
         legacyModuleResolve: configuration
           ? configuration.get('_legacyModuleResolve', false)
@@ -493,7 +491,6 @@ export function realActivate (context: ExtensionContext) {
         ) {
           next(document)
           syncedDocuments.set(document.uri.toString(), document)
-          return
         }
       },
       didChange: (event, next) => {
@@ -519,7 +516,7 @@ export function realActivate (context: ExtensionContext) {
         }
       },
       didClose: (document, next) => {
-        let uri = document.uri.toString()
+        const uri = document.uri.toString()
         if (syncedDocuments.has(uri)) {
           syncedDocuments.delete(uri)
           next(document)
@@ -533,8 +530,8 @@ export function realActivate (context: ExtensionContext) {
         ) {
           return []
         }
-        let standardDiagnostics: Diagnostic[] = []
-        for (let diagnostic of context.diagnostics) {
+        const standardDiagnostics: Diagnostic[] = []
+        for (const diagnostic of context.diagnostics) {
           if (diagnostic.source === 'standard') {
             standardDiagnostics.push(diagnostic)
           }
@@ -542,7 +539,7 @@ export function realActivate (context: ExtensionContext) {
         if (standardDiagnostics.length === 0) {
           return []
         }
-        let newContext: CodeActionContext = Object.assign({}, context, {
+        const newContext: CodeActionContext = Object.assign({}, context, {
           diagnostics: standardDiagnostics
         } as CodeActionContext)
         return next(document, range, newContext, token)
@@ -552,15 +549,15 @@ export function realActivate (context: ExtensionContext) {
           if (!params.items) {
             return null
           }
-          let result: (TextDocumentSettings | null)[] = []
-          for (let item of params.items) {
+          const result: Array<TextDocumentSettings | null> = []
+          for (const item of params.items) {
             if (item.section || !item.scopeUri) {
               result.push(null)
               continue
             }
-            let resource = client.protocol2CodeConverter.asUri(item.scopeUri)
-            let config = Workspace.getConfiguration('standard', resource)
-            let settings: TextDocumentSettings = {
+            const resource = client.protocol2CodeConverter.asUri(item.scopeUri)
+            const config = Workspace.getConfiguration('standard', resource)
+            const settings: TextDocumentSettings = {
               validate: false,
               autoFix: false,
               autoFixOnSave: false,
@@ -573,20 +570,20 @@ export function realActivate (context: ExtensionContext) {
               workspaceFolder: undefined,
               library: undefined
             }
-            let document: TextDocument = syncedDocuments.get(item.scopeUri)
+            const document: TextDocument = syncedDocuments.get(item.scopeUri)
             if (!document) {
               result.push(settings)
               continue
             }
             if (config.get('enabled', true)) {
-              let validateItems = config.get<(ValidateItem | string)[]>(
+              const validateItems = config.get<Array<ValidateItem | string>>(
                 'validate',
                 defaultLanguages
               )
-              for (let item of validateItems) {
+              for (const item of validateItems) {
                 if (Is.string(item) && item === document.languageId) {
                   settings.validate = true
-                  if (defaultLanguages.indexOf(item) > -1) {
+                  if (defaultLanguages.includes(item)) {
                     settings.autoFix = true
                   }
                   break
@@ -604,7 +601,7 @@ export function realActivate (context: ExtensionContext) {
               settings.autoFixOnSave =
                 settings.autoFix && config.get('autoFixOnSave', false)
             }
-            let workspaceFolder = Workspace.getWorkspaceFolder(resource)
+            const workspaceFolder = Workspace.getWorkspaceFolder(resource)
             if (workspaceFolder) {
               settings.workspaceFolder = {
                 name: workspaceFolder.name,
@@ -612,17 +609,17 @@ export function realActivate (context: ExtensionContext) {
                 index: workspaceFolder.index
               }
             }
-            let workingDirectories = config.get<(string | DirectoryItem)[]>(
+            const workingDirectories = config.get<Array<string | DirectoryItem>>(
               'workingDirectories',
               undefined
             )
             if (Array.isArray(workingDirectories)) {
-              let workingDirectory = undefined
-              let workspaceFolderPath =
+              let workingDirectory
+              const workspaceFolderPath =
                 workspaceFolder && workspaceFolder.uri.scheme === 'file'
                   ? workspaceFolder.uri.fsPath
                   : undefined
-              for (let entry of workingDirectories) {
+              for (const entry of workingDirectories) {
                 let directory
                 let changeProcessCWD = false
                 if (Is.string(entry)) {
@@ -639,7 +636,7 @@ export function realActivate (context: ExtensionContext) {
                   } else {
                     directory = undefined
                   }
-                  let filePath =
+                  const filePath =
                     document.uri.scheme === 'file'
                       ? document.uri.fsPath
                       : undefined
@@ -666,7 +663,7 @@ export function realActivate (context: ExtensionContext) {
       } as WorkspaceMiddleware
     }
   }
-  let client = new LanguageClient(linterName, serverOptions, clientOptions)
+  const client = new LanguageClient(linterName, serverOptions, clientOptions)
   client.registerProposedFeatures()
   defaultErrorHandler = client.createDefaultErrorHandler()
   const running = `${linterName} server is running.`
@@ -701,11 +698,11 @@ export function realActivate (context: ExtensionContext) {
 
     client.onRequest(NoStandardLibraryRequest.type, params => {
       const key = 'noStandardMessageShown'
-      let state = context.globalState.get<NoStandardState>(key, {})
-      let uri = URI.parse(params.source.uri)
-      let workspaceFolder = Workspace.getWorkspaceFolder(uri)
-      let config = Workspace.getConfiguration('standard')
-      let linter = config.get('engine', 'standard')
+      const state = context.globalState.get<NoStandardState>(key, {})
+      const uri = URI.parse(params.source.uri)
+      const workspaceFolder = Workspace.getWorkspaceFolder(uri)
+      const config = Workspace.getConfiguration('standard')
+      const linter = config.get('engine', 'standard')
       if (workspaceFolder) {
         client.info(
           [
@@ -751,15 +748,15 @@ export function realActivate (context: ExtensionContext) {
   context.subscriptions.push(
     client.start(),
     Commands.registerCommand('standard.executeAutofix', () => {
-      let textEditor = Window.activeTextEditor
+      const textEditor = Window.activeTextEditor
       if (!textEditor) {
         return
       }
-      let textDocument: VersionedTextDocumentIdentifier = {
+      const textDocument: VersionedTextDocumentIdentifier = {
         uri: textEditor.document.uri.toString(),
         version: textEditor.document.version
       }
-      let params: ExecuteCommandParams = {
+      const params: ExecuteCommandParams = {
         command: 'standard.applyAutoFix',
         arguments: [textDocument]
       }
