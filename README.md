@@ -1,12 +1,12 @@
 # vscode-standardjs
 
-VSCode extension to integrate [JavaScript Standard Style](https://github.com/feross/standard) into VSCode.
+VSCode extension to integrate [JavaScript Standard Style](https://github.com/standard/standard) into VSCode.
 
-We support [JavaScript Semi-Standard Style](https://github.com/Flet/semistandard) too, if you prefer keeping the semicolon.
+We support [JavaScript Semi-Standard Style](https://github.com/standard/semistandard) too, if you prefer keeping the semicolon.
 
 [JavaScript Standard Style with custom tweaks](https://github.com/standard/standardx) is also supported if you want to fine-tune your ESLint config while keeping the power of Standard.
 
-This plugin also works with [TypeScript Standard Style](https://github.com/toddbluhm/ts-standard) which has additonal rules for TypeScript based projects.
+This plugin also works with [TypeScript Standard Style](https://github.com/standard/ts-standard) which has additonal rules for TypeScript based projects.
 
 ## How to use
 
@@ -124,10 +124,6 @@ When you open the Command Palette in VSCode (⇧⌘P or Ctrl+Shift+P), this plug
 
 ## How to package
 
-1. Run `npm install`,
-2. Run `npm run compile`,
-3. Run `npm run package` to build a .vsix file, then you can install it with `code --install-extension vscode-standardjs.vsix`.
-
-## TODO
-
-1. [ ] add tests
+1. Run `npm install`
+2. Run `npm run package` to build a .vsix file
+3. You can install it with `code --install-extension vscode-standardjs.vsix`
