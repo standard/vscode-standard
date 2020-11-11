@@ -96,12 +96,10 @@ interface NoConfigParams {
   document: TextDocumentIdentifier
 }
 
-interface NoConfigResult {}
-
 namespace NoConfigRequest {
   export const type = new RequestType<
   NoConfigParams,
-  NoConfigResult,
+  {},
   void,
   void
   >('standard/noConfig')
@@ -111,12 +109,10 @@ interface NoStandardLibraryParams {
   source: TextDocumentIdentifier
 }
 
-interface NoStandardLibraryResult {}
-
 namespace NoStandardLibraryRequest {
   export const type = new RequestType<
   NoStandardLibraryParams,
-  NoStandardLibraryResult,
+  {},
   void,
   void
   >('standard/noLibrary')
@@ -136,7 +132,7 @@ namespace DirectoryItem {
       candidate &&
       Is.string(candidate.directory) &&
       (Is.boolean(candidate.changeProcessCWD) ||
-        candidate.changeProcessCWD === void 0)
+        candidate.changeProcessCWD === undefined)
     )
   }
 }
@@ -240,7 +236,7 @@ interface AutoFix {
 
 function computeKey (diagnostic: Diagnostic): string {
   const range = diagnostic.range
-  return `[${range.start.line},${range.start.character},${range.end.line},${range.end.character}]-${diagnostic.code}`
+  return `[${range.start.line},${range.start.character},${range.end.line},${range.end.character}]-${diagnostic.code as string | number}`
 }
 
 const codeActions: Map<string, Map<string, AutoFix>> = new Map<
@@ -252,12 +248,12 @@ function recordCodeAction (
   diagnostic: Diagnostic,
   problem: StandardProblem
 ): void {
-  if (!problem.fix || !problem.ruleId) {
-    return
+  if (problem.fix == null || problem.ruleId == null) {
+    return undefined
   }
   const uri = document.uri
   let edits: Map<string, AutoFix> = codeActions.get(uri)!
-  if (!edits) {
+  if (edits != null) {
     edits = new Map<string, AutoFix>()
     codeActions.set(uri, edits)
   }
@@ -384,7 +380,7 @@ function resolveSettings (
   }
   resultPromise = connection.workspace
     .getConfiguration({ scopeUri: uri, section: '' })
-    .then((settings: TextDocumentSettings) => {
+    .then(async (settings: TextDocumentSettings) => {
       const uri = URI.parse(document.uri)
       const linterNames: { [linter: string]: LinterNameValues } = {
         standard: 'JavaScript Standard Style',
@@ -412,19 +408,19 @@ function resolveSettings (
         if (pkgExists) {
           const pkgStr = fs.readFileSync(pkgPath, 'utf8')
           const pkg = JSON.parse(pkgStr)
-          if (pkg && pkg.devDependencies && pkg.devDependencies.standard) {
+          if (pkg != null && pkg.devDependencies && pkg.devDependencies.standard) {
             linter = 'standard'
             linterName = 'JavaScript Standard Style'
           } else if (
-            pkg &&
-            pkg.devDependencies &&
+            pkg != null &&
+            pkg.devDependencies != null &&
             pkg.devDependencies.semistandard
           ) {
             linter = 'semistandard'
             linterName = 'JavaScript Semi-Standard Style'
           } else if (
-            pkg &&
-            pkg.devDependencies &&
+            pkg != null &&
+            pkg.devDependencies != null &&
             pkg.devDependencies.standardx
           ) {
             linter = 'standardx'
@@ -439,10 +435,10 @@ function resolveSettings (
           }
           // if standard, semistandard, standardx, ts-standard config presented in package.json
           if (
-            (pkg && pkg.devDependencies && pkg.devDependencies.standard) ||
-            (pkg && pkg.devDependencies && pkg.devDependencies.semistandard) ||
-            (pkg && pkg.devDependencies && pkg.devDependencies.standardx) ||
-            (pkg && pkg.devDependencies && pkg.devDependencies['ts-standard'])
+            (pkg != null && pkg.devDependencies != null && pkg.devDependencies.standard) ||
+            (pkg != null && pkg.devDependencies != null && pkg.devDependencies.semistandard) ||
+            (pkg != null && pkg.devDependencies != null && pkg.devDependencies.standardx) ||
+            (pkg != null && pkg.devDependencies != null && pkg.devDependencies['ts-standard'])
           ) {
             if (pkg[linter]) {
               // if [linter] presented in package.json
@@ -473,8 +469,8 @@ function resolveSettings (
             settings.nodePath,
             settings.nodePath,
             trace
-          ).then<string, string>(undefined, () => {
-            return Files.resolve(linter, globalNodePath, directory, trace)
+          ).then<string, string>(undefined, async () => {
+            return await Files.resolve(linter, globalNodePath, directory, trace)
           })
         } else {
           promise = Files.resolve(linter, globalNodePath, directory, trace)
@@ -489,10 +485,10 @@ function resolveSettings (
           trace
         )
       }
-      return promise.then(
+      return await promise.then(
         path => {
           let library = path2Library.get(path)
-          if (!library) {
+          if (library != null) {
             library = require(path)
             if (!library?.lintText) {
               settings.validate = false
@@ -528,8 +524,8 @@ interface Request<P, R> {
   method: string
   params: P
   documentVersion: number | undefined
-  resolve: (value: R | Thenable<R>) => void | undefined
-  reject: (error: any) => void | undefined
+  resolve: (value: R | Thenable<R>) => void
+  reject: (error: any) => void
   token: CancellationToken | undefined
 }
 
@@ -537,7 +533,7 @@ namespace Request {
   export function is (value: any): value is Request<any, any> {
     const candidate: Request<any, any> = value
     return (
-      candidate &&
+      candidate != null &&
       !!candidate.token &&
       !!candidate.resolve &&
       !!candidate.reject
@@ -615,7 +611,7 @@ class BufferedMessageQueue {
     type: any,
     handler: NotificationHandler<any>,
     versionProvider?: any
-  ) {
+  ): void {
     connection.onNotification(type, (params: Notifcation<any>) => {
       this.queue.push({
         documentVersion:
@@ -632,7 +628,7 @@ class BufferedMessageQueue {
     type: NotificationType<P, RO>,
     params: P,
     version: number
-  ) {
+  ): void {
     this.queue.push({
       method: type.method,
       params,
@@ -662,8 +658,8 @@ class BufferedMessageQueue {
 
   private processQueue (): void {
     const message = this.queue.shift()
-    if (!message) {
-      return
+    if (message == null) {
+      return undefined
     }
     if (Request.is(message)) {
       const requestMessage = message
@@ -677,15 +673,15 @@ class BufferedMessageQueue {
             'Request got cancelled'
           )
         )
-        return
+        return undefined
       }
       const elem = this.requestHandlers.get(requestMessage.method)
       if (elem == null) {
         return
       }
       if (
-        elem?.versionProvider &&
-        requestMessage.documentVersion !== void 0 &&
+        elem.versionProvider != null &&
+        requestMessage.documentVersion !== undefined &&
         requestMessage.documentVersion !==
           elem.versionProvider(requestMessage.params)
       ) {
@@ -715,12 +711,11 @@ class BufferedMessageQueue {
       const elem = this.notificationHandlers.get(notificationMessage.method)
       if (
         elem != null &&
-        elem.versionProvider &&
-        notificationMessage.documentVersion !== void 0 &&
-        notificationMessage.documentVersion !==
+        elem.versionProvider != null &&
+        notificationMessage?.documentVersion !==
           elem.versionProvider(notificationMessage.params)
       ) {
-        return
+        return undefined
       }
       if (elem != null) {
         elem.handler(notificationMessage.params)
@@ -852,7 +847,7 @@ documents.onDidClose(event => {
   })
 })
 
-function environmentChanged () {
+function environmentChanged (): void {
   document2Settings.clear()
   for (const document of documents.all()) {
     messageQueue.addNotificationMessage(
@@ -1474,7 +1469,7 @@ function computeAllFixes (
             textDocument.positionAt(editInfo.edit.range[0]),
             textDocument.positionAt(editInfo.edit.range[1])
           ),
-          editInfo.edit.text || ''
+          editInfo.edit.text ?? ''
         )
       })
     }
