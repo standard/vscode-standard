@@ -70,9 +70,9 @@ namespace ValidateItem {
   export function is (item: any): item is ValidateItem {
     const candidate = item as ValidateItem
     return (
-      candidate &&
+      candidate != null &&
       Is.string(candidate.language) &&
-      (Is.boolean(candidate.autoFix) || candidate.autoFix === void 0)
+      (Is.boolean(candidate.autoFix) || candidate.autoFix === undefined)
     )
   }
 }
@@ -86,10 +86,10 @@ namespace DirectoryItem {
   export function is (item: any): item is DirectoryItem {
     const candidate = item as DirectoryItem
     return (
-      candidate &&
+      candidate != null &&
       Is.string(candidate.directory) &&
       (Is.boolean(candidate.changeProcessCWD) ||
-        candidate.changeProcessCWD === void 0)
+        candidate.changeProcessCWD === undefined)
     )
   }
 }
@@ -135,15 +135,10 @@ interface NoStandardLibraryParams {
   source: TextDocumentIdentifier
 }
 
-interface NoStandardLibraryResult {}
-
 namespace NoStandardLibraryRequest {
-  export const type = new RequestType<
-  NoStandardLibraryParams,
-  NoStandardLibraryResult,
-  void,
-  void
-  >('standard/noLibrary')
+  export const type = new RequestType<NoStandardLibraryParams, {}, void, void>(
+    'standard/noLibrary'
+  )
 }
 
 const exitCalled = new NotificationType<[number, string], void>(
@@ -153,7 +148,7 @@ const exitCalled = new NotificationType<[number, string], void>(
 interface WorkspaceFolderItem extends QuickPickItem {
   folder: VWorkspaceFolder
 }
-function getLinterName () {
+function getLinterName (): LinterNameValues {
   const configuration = Workspace.getConfiguration('standard')
   const linterNames: { [linter: string]: LinterNameValues } = {
     standard: 'JavaScript Standard Style',
@@ -180,16 +175,16 @@ function pickFolder (
     }),
     { placeHolder: placeHolder }
   ).then(selected => {
-    if (!selected) {
+    if (selected == null) {
       return undefined
     }
     return selected.folder
   })
 }
 
-function enable () {
+function enable (): void {
   const folders = Workspace.workspaceFolders
-  if (!folders) {
+  if (folders == null || folders.length === 0) {
     Window.showWarningMessage(
       `${linterName} can only be enabled if VS Code is opened on a workspace folder.`
     )
@@ -222,9 +217,9 @@ function enable () {
   })
 }
 
-function disable () {
+function disable (): void {
   const folders = Workspace.workspaceFolders
-  if (!folders) {
+  if (folders == null || folders.length === 0) {
     Window.showErrorMessage(
       `${linterName} can only be disabled if VS Code is opened on a workspace folder.`
     )
@@ -249,8 +244,8 @@ function disable () {
     enabledFolders,
     `Select a workspace folder to disable ${linterName} for`
   ).then(folder => {
-    if (!folder) {
-      return
+    if (folder == null) {
+      return undefined
     }
     Workspace.getConfiguration('standard', folder.uri).update('enable', false)
   })
@@ -286,11 +281,11 @@ function shouldBeValidated (textDocument: TextDocument): boolean {
   return false
 }
 
-export function activate (context: ExtensionContext) {
+export function activate (context: ExtensionContext): void {
   let activated: boolean
   let openListener: Disposable
   let configurationListener: Disposable
-  function didOpenTextDocument (textDocument: TextDocument) {
+  function didOpenTextDocument (textDocument: TextDocument): void {
     if (activated) {
       return
     }
@@ -320,7 +315,7 @@ export function activate (context: ExtensionContext) {
     configurationChanged
   )
 
-  const notValidating = () =>
+  const notValidating = (): Thenable<string> =>
     Window.showInformationMessage(
       `${linterName} is not validating any files yet.`
     )
@@ -336,7 +331,7 @@ export function activate (context: ExtensionContext) {
   configurationChanged()
 }
 
-export function realActivate (context: ExtensionContext) {
+export function realActivate (context: ExtensionContext): void {
   linterName = getLinterName()
 
   const statusBarItem = Window.createStatusBarItem(StatusBarAlignment.Right, 0)
@@ -354,7 +349,7 @@ export function realActivate (context: ExtensionContext) {
     }
   }
 
-  function updateStatus (status: Status) {
+  function updateStatus (status: Status): void {
     switch (status) {
       case Status.ok:
         statusBarItem.color = undefined
@@ -376,7 +371,7 @@ export function realActivate (context: ExtensionContext) {
     showStatusBarItem(
       serverRunning &&
         (standardStatus !== Status.ok ||
-          (editor && defaultLanguages.includes(editor.document.languageId)))
+          (editor != null && defaultLanguages.includes(editor.document.languageId)))
     )
   }
 
@@ -486,7 +481,7 @@ export function realActivate (context: ExtensionContext) {
     middleware: {
       didOpen: (document, next) => {
         if (
-          Languages.match(packageJsonFilter, document) ||
+          Languages.match(packageJsonFilter, document) >= 0 ||
           shouldBeValidated(document)
         ) {
           next(document)
@@ -525,7 +520,7 @@ export function realActivate (context: ExtensionContext) {
       provideCodeActions: (document, range, context, token, next) => {
         if (
           !syncedDocuments.has(document.uri.toString()) ||
-          !context.diagnostics ||
+          context.diagnostics != null ||
           context.diagnostics.length === 0
         ) {
           return []
@@ -546,12 +541,12 @@ export function realActivate (context: ExtensionContext) {
       },
       workspace: {
         configuration: (params, _token, _next): any[] => {
-          if (!params.items) {
+          if (params.items == null) {
             return null
           }
           const result: Array<TextDocumentSettings | null> = []
           for (const item of params.items) {
-            if (item.section || !item.scopeUri) {
+            if (item.section != null || !item.scopeUri) {
               result.push(null)
               continue
             }
@@ -609,10 +604,9 @@ export function realActivate (context: ExtensionContext) {
                 index: workspaceFolder.index
               }
             }
-            const workingDirectories = config.get<Array<string | DirectoryItem>>(
-              'workingDirectories',
-              undefined
-            )
+            const workingDirectories = config.get<
+            Array<string | DirectoryItem>
+            >('workingDirectories', undefined)
             if (Array.isArray(workingDirectories)) {
               let workingDirectory
               const workspaceFolderPath =
@@ -631,7 +625,7 @@ export function realActivate (context: ExtensionContext) {
                 if (directory) {
                   if (path.isAbsolute(directory)) {
                     directory = directory
-                  } else if (workspaceFolderPath && directory) {
+                  } else if (workspaceFolderPath != null && directory) {
                     directory = path.join(workspaceFolderPath, directory)
                   } else {
                     directory = undefined
@@ -640,8 +634,8 @@ export function realActivate (context: ExtensionContext) {
                     document.uri.scheme === 'file'
                       ? document.uri.fsPath
                       : undefined
-                  if (filePath && directory && filePath.startsWith(directory)) {
-                    if (workingDirectory) {
+                  if (filePath != null && directory && filePath.startsWith(directory)) {
+                    if (workingDirectory != null) {
                       if (
                         workingDirectory.directory.length < directory.length
                       ) {
@@ -741,7 +735,7 @@ export function realActivate (context: ExtensionContext) {
     })
   })
 
-  if (dummyCommands) {
+  if (dummyCommands != null) {
     dummyCommands.forEach(command => command.dispose())
     dummyCommands = undefined
   }
@@ -749,8 +743,8 @@ export function realActivate (context: ExtensionContext) {
     client.start(),
     Commands.registerCommand('standard.executeAutofix', () => {
       const textEditor = Window.activeTextEditor
-      if (!textEditor) {
-        return
+      if (textEditor == null) {
+        return undefined
       }
       const textDocument: VersionedTextDocumentIdentifier = {
         uri: textEditor.document.uri.toString(),
@@ -775,8 +769,8 @@ export function realActivate (context: ExtensionContext) {
   )
 }
 
-export function deactivate () {
-  if (dummyCommands) {
+export function deactivate (): void {
+  if (dummyCommands != null) {
     dummyCommands.forEach(command => command.dispose())
   }
 }
