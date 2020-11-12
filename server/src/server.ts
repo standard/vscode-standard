@@ -5,7 +5,6 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import {
-  CancellationToken,
   CodeActionRequest,
   Command,
   createConnection,
@@ -27,20 +26,27 @@ import {
   RequestHandler,
   RequestType,
   ResponseError,
-  TextDocumentIdentifier,
   TextDocuments,
   TextDocumentSaveReason,
   TextDocumentSyncKind,
   TextEdit,
   VersionedTextDocumentIdentifier
 } from 'vscode-languageserver'
-import {
-  WorkspaceChange
-} from 'vscode-languageserver-protocol'
+import { WorkspaceChange } from 'vscode-languageserver-protocol'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import * as deglob from 'deglob'
 import * as async from 'async'
+
+import * as Is from './utils/Is'
+import * as StatusNotification from './utils/StatusNotification'
+import * as NoStandardLibraryRequest from './utils/NoStandardLibraryRequest'
+import * as DirectoryItem from './utils/DirectoryItem'
+import * as NoConfigRequest from './utils/NoConfigRequest'
+import * as CommandIds from './utils/CommandIds'
+import * as Request from './utils/Request'
+import * as Thenable from './utils/Thenable'
+import * as ValidateNotification from './utils/ValidateNotification'
 
 type LinterValues = 'standard' | 'semistandard' | 'standardx' | 'ts-standard'
 type LinterNameValues =
@@ -49,25 +55,6 @@ type LinterNameValues =
   | 'JavaScript Standard Style with custom tweaks'
   | 'TypeScript Standard Style'
 
-namespace Is {
-  const toString = Object.prototype.toString
-
-  export function boolean (value: any): value is boolean {
-    return value === true || value === false
-  }
-
-  export function string (value: any): value is string {
-    return toString.call(value) === '[object String]'
-  }
-}
-
-namespace CommandIds {
-  export const applySingleFix: string = 'standard.applySingleFix'
-  export const applySameFixes: string = 'standard.applySameFixes'
-  export const applyAllFixes: string = 'standard.applyAllFixes'
-  export const applyAutoFix: string = 'standard.applyAutoFix'
-}
-
 interface StandardError extends Error {
   messageTemplate?: string
   messageData?: {
@@ -75,67 +62,7 @@ interface StandardError extends Error {
   }
 }
 
-enum Status {
-  ok = 1,
-  warn = 2,
-  error = 3
-}
-
-interface StatusParams {
-  state: Status
-}
-
-namespace StatusNotification {
-  export const type = new NotificationType<StatusParams, void>(
-    'standard/status'
-  )
-}
-
-interface NoConfigParams {
-  message: string
-  document: TextDocumentIdentifier
-}
-
-namespace NoConfigRequest {
-  export const type = new RequestType<
-  NoConfigParams,
-  {},
-  void,
-  void
-  >('standard/noConfig')
-}
-
-interface NoStandardLibraryParams {
-  source: TextDocumentIdentifier
-}
-
-namespace NoStandardLibraryRequest {
-  export const type = new RequestType<
-  NoStandardLibraryParams,
-  {},
-  void,
-  void
-  >('standard/noLibrary')
-}
-
 type RunValues = 'onType' | 'onSave'
-
-interface DirectoryItem {
-  directory: string
-  changeProcessCWD?: boolean
-}
-
-namespace DirectoryItem {
-  export function is (item: any): item is DirectoryItem {
-    const candidate = item as DirectoryItem
-    return (
-      candidate &&
-      Is.string(candidate.directory) &&
-      (Is.boolean(candidate.changeProcessCWD) ||
-        candidate.changeProcessCWD === undefined)
-    )
-  }
-}
 
 interface TextDocumentSettings {
   validate: boolean
@@ -147,7 +74,7 @@ interface TextDocumentSettings {
   run: RunValues
   nodePath: string | undefined
   workspaceFolder: { name: string, uri: URI } | undefined
-  workingDirectory: DirectoryItem | undefined
+  workingDirectory: DirectoryItem.DirectoryItem | undefined
   library: StandardModule | undefined
 }
 
@@ -197,7 +124,11 @@ interface Opts {
   cwd?: string
 }
 interface StandardModule {
-  lintText: (text: string, opts?: CLIOptions, cb?: StandardModuleCallback) => void
+  lintText: (
+    text: string,
+    opts?: CLIOptions,
+    cb?: StandardModuleCallback
+  ) => void
   parseOpts: (opts: Object) => Opts
 }
 
@@ -236,7 +167,9 @@ interface AutoFix {
 
 function computeKey (diagnostic: Diagnostic): string {
   const range = diagnostic.range
-  return `[${range.start.line},${range.start.character},${range.end.line},${range.end.character}]-${diagnostic.code as string | number}`
+  return `[${range.start.line},${range.start.character},${range.end.line},${
+    range.end.character
+  }]-${diagnostic.code as string | number}`
 }
 
 const codeActions: Map<string, Map<string, AutoFix>> = new Map<
@@ -332,7 +265,9 @@ function getFilePath (documentOrUri: string | URI): string {
   if (!documentOrUri) {
     return ''
   }
-  const uri = Is.string(documentOrUri) ? URI.parse(documentOrUri) : documentOrUri
+  const uri = Is.string(documentOrUri)
+    ? URI.parse(documentOrUri)
+    : documentOrUri
   if (uri.scheme !== 'file') {
     return ''
   }
@@ -408,7 +343,11 @@ function resolveSettings (
         if (pkgExists) {
           const pkgStr = fs.readFileSync(pkgPath, 'utf8')
           const pkg = JSON.parse(pkgStr)
-          if (pkg != null && pkg.devDependencies && pkg.devDependencies.standard) {
+          if (
+            pkg != null &&
+            pkg.devDependencies &&
+            pkg.devDependencies.standard
+          ) {
             linter = 'standard'
             linterName = 'JavaScript Standard Style'
           } else if (
@@ -435,10 +374,18 @@ function resolveSettings (
           }
           // if standard, semistandard, standardx, ts-standard config presented in package.json
           if (
-            (pkg != null && pkg.devDependencies != null && pkg.devDependencies.standard) ||
-            (pkg != null && pkg.devDependencies != null && pkg.devDependencies.semistandard) ||
-            (pkg != null && pkg.devDependencies != null && pkg.devDependencies.standardx) ||
-            (pkg != null && pkg.devDependencies != null && pkg.devDependencies['ts-standard'])
+            (pkg != null &&
+              pkg.devDependencies != null &&
+              pkg.devDependencies.standard) ||
+            (pkg != null &&
+              pkg.devDependencies != null &&
+              pkg.devDependencies.semistandard) ||
+            (pkg != null &&
+              pkg.devDependencies != null &&
+              pkg.devDependencies.standardx) ||
+            (pkg != null &&
+              pkg.devDependencies != null &&
+              pkg.devDependencies['ts-standard'])
           ) {
             if (pkg[linter]) {
               // if [linter] presented in package.json
@@ -520,43 +467,15 @@ function resolveSettings (
   return resultPromise
 }
 
-interface Request<P, R> {
-  method: string
-  params: P
-  documentVersion: number | undefined
-  resolve: (value: R | Thenable<R>) => void
-  reject: (error: any) => void
-  token: CancellationToken | undefined
-}
-
-namespace Request {
-  export function is (value: any): value is Request<any, any> {
-    const candidate: Request<any, any> = value
-    return (
-      candidate != null &&
-      !!candidate.token &&
-      !!candidate.resolve &&
-      !!candidate.reject
-    )
-  }
-}
-
 interface Notifcation<P> {
   method: string
   params: P
   documentVersion: number
 }
 
-type Message<P, R> = Notifcation<P> | Request<P, R>
+type Message<P, R> = Notifcation<P> | Request.Request<P, R>
 
 type VersionProvider<P> = (params: P) => number
-
-namespace Thenable {
-  export function is<T> (value: any): value is Thenable<T> {
-    const candidate: Thenable<T> = value
-    return candidate && typeof candidate.then === 'function'
-  }
-}
 
 class BufferedMessageQueue {
   private readonly queue: Array<Message<any, any>>
@@ -726,13 +645,6 @@ class BufferedMessageQueue {
 }
 
 const messageQueue: BufferedMessageQueue = new BufferedMessageQueue(connection)
-
-namespace ValidateNotification {
-  export const type: NotificationType<
-  TextDocument,
-  void
-  > = new NotificationType<TextDocument, void>('standard/validate')
-}
 
 messageQueue.onNotification(
   ValidateNotification.type,
@@ -913,7 +825,7 @@ const singleErrorHandlers: Array<(
   error: any,
   document: TextDocument,
   library: StandardModule | undefined
-) => Status | undefined> = [
+) => StatusNotification.Status | undefined> = [
   tryHandleNoConfig,
   tryHandleConfigError,
   tryHandleMissingModule,
@@ -935,7 +847,9 @@ function validateSingle (
     }
     try {
       validate(document, settings, publishDiagnostics)
-      connection.sendNotification(StatusNotification.type, { state: Status.ok })
+      connection.sendNotification(StatusNotification.type, {
+        state: StatusNotification.Status.ok
+      })
     } catch (err) {
       let status
       for (const handler of singleErrorHandlers) {
@@ -944,7 +858,7 @@ function validateSingle (
           break
         }
       }
-      status = status || Status.error
+      status = status || StatusNotification.Status.error
       connection.sendNotification(StatusNotification.type, { state: status })
     }
   })
@@ -1119,7 +1033,7 @@ function tryHandleNoConfig (
   error: any,
   document: TextDocument,
   library: StandardModule | undefined
-): Status | undefined {
+): StatusNotification.Status | undefined {
   if (!isNoConfigFoundError(error)) {
     return undefined
   }
@@ -1134,7 +1048,7 @@ function tryHandleNoConfig (
       .then(undefined, () => {})
     noConfigReported.set(document.uri, library)
   }
-  return Status.warn
+  return StatusNotification.Status.warn
 }
 
 const configErrorReported: Map<string, StandardModule | undefined> = new Map<
@@ -1146,12 +1060,12 @@ function tryHandleConfigError (
   error: any,
   document: TextDocument,
   library: StandardModule | undefined
-): Status | undefined {
+): StatusNotification.Status | undefined {
   if (!error.message) {
     return undefined
   }
 
-  function handleFileName (filename: string): Status {
+  function handleFileName (filename: string): StatusNotification.Status {
     if (!configErrorReported.has(filename)) {
       connection.console.error(getMessage(error, document))
       if (!documents.get(URI.file(filename).toString())) {
@@ -1159,7 +1073,7 @@ function tryHandleConfigError (
       }
       configErrorReported.set(filename, library)
     }
-    return Status.warn
+    return StatusNotification.Status.warn
   }
 
   let matches = /Cannot read config file:\s+(.*)\nError:\s+(.*)/.exec(
@@ -1193,7 +1107,7 @@ function tryHandleMissingModule (
   error: any,
   document: TextDocument,
   library: StandardModule | undefined
-): Status | undefined {
+): StatusNotification.Status | undefined {
   if (!error.message) {
     return undefined
   }
@@ -1202,7 +1116,7 @@ function tryHandleMissingModule (
     plugin: string,
     module: string,
     error: StandardError
-  ): Status {
+  ): StatusNotification.Status {
     if (!missingModuleReported.has(plugin)) {
       const fsPath = getFilePath(document.uri)
       missingModuleReported.set(plugin, library!)
@@ -1227,7 +1141,7 @@ function tryHandleMissingModule (
         )
       }
     }
-    return Status.warn
+    return StatusNotification.Status.warn
   }
 
   const matches = /Failed to load plugin (.*): Cannot find module (.*)/.exec(
@@ -1240,9 +1154,12 @@ function tryHandleMissingModule (
   return undefined
 }
 
-function showErrorMessage (error: any, document: TextDocument): Status {
+function showErrorMessage (
+  error: any,
+  document: TextDocument
+): StatusNotification.Status {
   connection.window.showErrorMessage(getMessage(error, document))
-  return Status.error
+  return StatusNotification.Status.error
 }
 
 messageQueue.registerNotification(
