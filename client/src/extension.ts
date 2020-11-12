@@ -30,16 +30,20 @@ import {
   LanguageClient,
   LanguageClientOptions,
   NotificationType,
-  RequestType,
   RevealOutputChannelOn,
   ServerOptions,
   State as ClientState,
-  TextDocumentIdentifier,
   TransportKind,
   VersionedTextDocumentIdentifier,
   WorkspaceMiddleware
 } from 'vscode-languageclient'
 import { URI } from 'vscode-uri'
+
+import * as Is from './utils/Is'
+import * as ValidateItem from './utils/ValidateItem'
+import * as DirectoryItem from './utils/DirectoryItem'
+import * as StatusNotification from './utils/StatusNotification'
+import * as NoStandardLibraryRequest from './utils/NoStandardLibraryRequest'
 
 type LinterValues = 'standard' | 'semistandard' | 'standardx' | 'ts-standard'
 type LinterNameValues =
@@ -48,51 +52,6 @@ type LinterNameValues =
   | 'JavaScript Standard Style with custom tweaks'
   | 'TypeScript Standard Style'
 var linterName: LinterNameValues
-
-namespace Is {
-  const toString = Object.prototype.toString
-
-  export function boolean (value: any): value is boolean {
-    return value === true || value === false
-  }
-
-  export function string (value: any): value is string {
-    return toString.call(value) === '[object String]'
-  }
-}
-
-interface ValidateItem {
-  language: string
-  autoFix?: boolean
-}
-
-namespace ValidateItem {
-  export function is (item: any): item is ValidateItem {
-    const candidate = item as ValidateItem
-    return (
-      candidate != null &&
-      Is.string(candidate.language) &&
-      (Is.boolean(candidate.autoFix) || candidate.autoFix === undefined)
-    )
-  }
-}
-
-interface DirectoryItem {
-  directory: string
-  changeProcessCWD?: boolean
-}
-
-namespace DirectoryItem {
-  export function is (item: any): item is DirectoryItem {
-    const candidate = item as DirectoryItem
-    return (
-      candidate != null &&
-      Is.string(candidate.directory) &&
-      (Is.boolean(candidate.changeProcessCWD) ||
-        candidate.changeProcessCWD === undefined)
-    )
-  }
-}
 
 type RunValues = 'onType' | 'onSave'
 
@@ -106,39 +65,13 @@ interface TextDocumentSettings {
   run: RunValues
   nodePath: string | undefined
   workspaceFolder: VWorkspaceFolder | undefined
-  workingDirectory: DirectoryItem | undefined
+  workingDirectory: DirectoryItem.DirectoryItem | undefined
   library: undefined
 }
 
 interface NoStandardState {
   global?: boolean
   workspaces?: { [key: string]: boolean }
-}
-
-enum Status {
-  ok = 1,
-  warn = 2,
-  error = 3
-}
-
-interface StatusParams {
-  state: Status
-}
-
-namespace StatusNotification {
-  export const type = new NotificationType<StatusParams, void>(
-    'standard/status'
-  )
-}
-
-interface NoStandardLibraryParams {
-  source: TextDocumentIdentifier
-}
-
-namespace NoStandardLibraryRequest {
-  export const type = new RequestType<NoStandardLibraryParams, {}, void, void>(
-    'standard/noLibrary'
-  )
 }
 
 const exitCalled = new NotificationType<[number, string], void>(
@@ -264,7 +197,7 @@ function shouldBeValidated (textDocument: TextDocument): boolean {
   if (!config.get('enable', true)) {
     return false
   }
-  const validate = config.get<Array<ValidateItem | string>>(
+  const validate = config.get<ValidateItem.ValidateArray>(
     'validate',
     defaultLanguages
   )
@@ -335,7 +268,7 @@ export function realActivate (context: ExtensionContext): void {
   linterName = getLinterName()
 
   const statusBarItem = Window.createStatusBarItem(StatusBarAlignment.Right, 0)
-  let standardStatus: Status = Status.ok
+  let standardStatus: StatusNotification.Status = StatusNotification.Status.ok
   let serverRunning: boolean = false
 
   statusBarItem.text = linterName
@@ -349,15 +282,15 @@ export function realActivate (context: ExtensionContext): void {
     }
   }
 
-  function updateStatus (status: Status): void {
+  function updateStatus (status: StatusNotification.Status): void {
     switch (status) {
-      case Status.ok:
+      case StatusNotification.Status.ok:
         statusBarItem.color = undefined
         break
-      case Status.warn:
+      case StatusNotification.Status.warn:
         statusBarItem.color = 'yellow'
         break
-      case Status.error:
+      case StatusNotification.Status.error:
         statusBarItem.color = 'darkred'
         break
     }
@@ -367,20 +300,21 @@ export function realActivate (context: ExtensionContext): void {
 
   function updateStatusBarVisibility (editor: TextEditor): void {
     statusBarItem.text =
-      standardStatus === Status.ok ? linterName : `${linterName}!`
+      standardStatus === StatusNotification.Status.ok
+        ? linterName
+        : `${linterName}!`
     showStatusBarItem(
       serverRunning &&
-        (standardStatus !== Status.ok ||
-          (editor != null && defaultLanguages.includes(editor.document.languageId)))
+        (standardStatus !== StatusNotification.Status.ok ||
+          (editor != null &&
+            defaultLanguages.includes(editor.document.languageId)))
     )
   }
 
   Window.onDidChangeActiveTextEditor(updateStatusBarVisibility)
   updateStatusBarVisibility(Window.activeTextEditor)
 
-  // We need to go one level up since an extension compile the js code into
-  // the output folder.
-  // serverModule
+  // We need to go one level up since an extension compile the js code into the output folder.
   const serverModule = context.asAbsolutePath(
     path.join('server', 'out', 'server.js')
   )
@@ -571,7 +505,7 @@ export function realActivate (context: ExtensionContext): void {
               continue
             }
             if (config.get('enabled', true)) {
-              const validateItems = config.get<Array<ValidateItem | string>>(
+              const validateItems = config.get<ValidateItem.ValidateArray>(
                 'validate',
                 defaultLanguages
               )
@@ -605,7 +539,7 @@ export function realActivate (context: ExtensionContext): void {
               }
             }
             const workingDirectories = config.get<
-            Array<string | DirectoryItem>
+            Array<string | DirectoryItem.DirectoryItem>
             >('workingDirectories', undefined)
             if (Array.isArray(workingDirectories)) {
               let workingDirectory
@@ -634,7 +568,11 @@ export function realActivate (context: ExtensionContext): void {
                     document.uri.scheme === 'file'
                       ? document.uri.fsPath
                       : undefined
-                  if (filePath != null && directory && filePath.startsWith(directory)) {
+                  if (
+                    filePath != null &&
+                    directory &&
+                    filePath.startsWith(directory)
+                  ) {
                     if (workingDirectory != null) {
                       if (
                         workingDirectory.directory.length < directory.length
