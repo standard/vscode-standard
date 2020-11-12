@@ -6,7 +6,7 @@ We support [JavaScript Semi-Standard Style](https://github.com/Flet/semistandard
 
 [JavaScript Standard Style with custom tweaks](https://github.com/standard/standardx) is also supported if you want to fine-tune your ESLint config while keeping the power of Standard.
 
-This plugin also works with [TypeScript Standard Style][https://github.com/toddbluhm/ts-standard] which has additonal rules for TypeScript based projects.
+This plugin also works with [TypeScript Standard Style](https://github.com/standard/ts-standard) which has additonal rules for TypeScript based projects.
 
 ## How to use
 
