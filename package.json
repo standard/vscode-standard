@@ -7,10 +7,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chenxsan/vscode-standardjs.git"
+    "url": "https://github.com/standard/vscode-standardjs.git"
   },
   "bugs": {
-    "url": "https://github.com/chenxsan/vscode-standardjs/issues"
+    "url": "https://github.com/standard/vscode-standardjs/issues"
   },
   "publisher": "chenxsan",
   "icon": "standard_icon.png",
