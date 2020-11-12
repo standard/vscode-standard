@@ -31,9 +31,8 @@
   "devDependencies": {
     "@types/async": "^3.2.3",
     "@types/deglob": "^2.1.1",
-    "snazzy": "^9.0.0",
-    "ts-standard": "^9.0.0",
-    "typescript": "^4.0.5"
+    "snazzy": "file:../node_modules/snazzy",
+    "ts-standard": "file:../node_modules/ts-standard"
   },
   "scripts": {
     "lint": "ts-standard | snazzy",
