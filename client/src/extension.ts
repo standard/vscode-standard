@@ -115,10 +115,10 @@ function pickFolder (
   })
 }
 
-function enable (): void {
+async function enable (): Promise<void> {
   const folders = Workspace.workspaceFolders
   if (folders == null || folders.length === 0) {
-    Window.showWarningMessage(
+    await Window.showWarningMessage(
       `${linterName} can only be enabled if VS Code is opened on a workspace folder.`
     )
     return
@@ -129,31 +129,33 @@ function enable (): void {
   )
   if (disabledFolders.length === 0) {
     if (folders.length === 1) {
-      Window.showInformationMessage(
+      await Window.showInformationMessage(
         `${linterName} is already enabled in the workspace.`
       )
     } else {
-      Window.showInformationMessage(
+      await Window.showInformationMessage(
         `${linterName} is already enabled on all workspace folders.`
       )
     }
     return
   }
-  pickFolder(
+  const folder = await pickFolder(
     disabledFolders,
     `Select a workspace folder to enable ${linterName} for`
-  ).then(folder => {
-    if (!folder) {
-      return
-    }
-    Workspace.getConfiguration('standard', folder.uri).update('enable', true)
-  })
+  )
+  if (folder == null) {
+    return
+  }
+  await Workspace.getConfiguration('standard', folder.uri).update(
+    'enable',
+    true
+  )
 }
 
-function disable (): void {
+async function disable (): Promise<void> {
   const folders = Workspace.workspaceFolders
   if (folders == null || folders.length === 0) {
-    Window.showErrorMessage(
+    await Window.showErrorMessage(
       `${linterName} can only be disabled if VS Code is opened on a workspace folder.`
     )
     return
@@ -163,25 +165,27 @@ function disable (): void {
   )
   if (enabledFolders.length === 0) {
     if (folders.length === 1) {
-      Window.showInformationMessage(
+      await Window.showInformationMessage(
         `${linterName} is already disabled in the workspace.`
       )
     } else {
-      Window.showInformationMessage(
+      await Window.showInformationMessage(
         `${linterName} is already disabled on all workspace folders.`
       )
     }
     return
   }
-  pickFolder(
+  const folder = await pickFolder(
     enabledFolders,
     `Select a workspace folder to disable ${linterName} for`
-  ).then(folder => {
-    if (folder == null) {
-      return undefined
-    }
-    Workspace.getConfiguration('standard', folder.uri).update('enable', false)
-  })
+  )
+  if (folder == null) {
+    return
+  }
+  await Workspace.getConfiguration('standard', folder.uri).update(
+    'enable',
+    false
+  )
 }
 
 let dummyCommands: Disposable[]
@@ -214,7 +218,7 @@ function shouldBeValidated (textDocument: TextDocument): boolean {
   return false
 }
 
-export function activate (context: ExtensionContext): void {
+export async function activate (context: ExtensionContext): Promise<void> {
   let activated: boolean
   let openListener: Disposable
   let configurationListener: Disposable
@@ -229,7 +233,7 @@ export function activate (context: ExtensionContext): void {
       realActivate(context)
     }
   }
-  function configurationChanged () {
+  async function configurationChanged (): Promise<void> {
     if (!activated) {
       for (const textDocument of Workspace.textDocuments) {
         if (shouldBeValidated(textDocument)) {
@@ -241,17 +245,18 @@ export function activate (context: ExtensionContext): void {
         }
       }
     }
-    Commands.executeCommand('setContext', 'standardEnabled', activated)
+    await Commands.executeCommand('setContext', 'standardEnabled', activated)
   }
   openListener = Workspace.onDidOpenTextDocument(didOpenTextDocument)
   configurationListener = Workspace.onDidChangeConfiguration(
     configurationChanged
   )
 
-  const notValidating = (): Thenable<string> =>
-    Window.showInformationMessage(
+  const notValidating = async (): Promise<Thenable<string>> => {
+    return await Window.showInformationMessage(
       `${linterName} is not validating any files yet.`
     )
+  }
   dummyCommands = [
     Commands.registerCommand('standard.executeAutofix', notValidating),
     Commands.registerCommand('standard.showOutputChannel', notValidating)
@@ -261,7 +266,7 @@ export function activate (context: ExtensionContext): void {
     Commands.registerCommand('standard.enable', enable),
     Commands.registerCommand('standard.disable', disable)
   )
-  configurationChanged()
+  await configurationChanged()
 }
 
 export function realActivate (context: ExtensionContext): void {
@@ -612,66 +617,69 @@ export function realActivate (context: ExtensionContext): void {
     }
     updateStatusBarVisibility(Window.activeTextEditor)
   })
-  client.onReady().then(() => {
-    client.onNotification(StatusNotification.type, params => {
-      updateStatus(params.state)
-    })
+  client
+    .onReady()
+    .then(() => {
+      client.onNotification(StatusNotification.type, params => {
+        updateStatus(params.state)
+      })
 
-    client.onNotification(exitCalled, params => {
-      serverCalledProcessExit = true
-      client.error(
-        `Server process exited with code ${params[0]}. This usually indicates a misconfigured ${linterName} setup.`,
-        params[1]
-      )
-      Window.showErrorMessage(
-        `${linterName} server shut down itself. See '${linterName}' output channel for details.`
-      )
-    })
+      client.onNotification(exitCalled, async params => {
+        serverCalledProcessExit = true
+        client.error(
+          `Server process exited with code ${params[0]}. This usually indicates a misconfigured ${linterName} setup.`,
+          params[1]
+        )
+        await Window.showErrorMessage(
+          `${linterName} server shut down itself. See '${linterName}' output channel for details.`
+        )
+      })
 
-    client.onRequest(NoStandardLibraryRequest.type, params => {
-      const key = 'noStandardMessageShown'
-      const state = context.globalState.get<NoStandardState>(key, {})
-      const uri = URI.parse(params.source.uri)
-      const workspaceFolder = Workspace.getWorkspaceFolder(uri)
-      const config = Workspace.getConfiguration('standard')
-      const linter = config.get('engine', 'standard')
-      if (workspaceFolder) {
-        client.info(
-          [
-            '',
-            `Failed to load the ${linterName} library for the document ${uri.fsPath}`,
-            '',
-            `To use ${linterName} please install ${linterName} by running 'npm install ${linter}' in the workspace folder ${workspaceFolder.name}`,
-            `or globally using 'npm install -g ${linter}'. You need to reopen the workspace after installing ${linterName}.`,
-            '',
-            `Alternatively you can disable ${linterName} for the workspace folder ${workspaceFolder.name} by executing the 'Disable JavaScript Standard Style' command.`
-          ].join('\n')
-        )
-        if (!state.workspaces) {
-          state.workspaces = Object.create(null)
+      client.onRequest(NoStandardLibraryRequest.type, async params => {
+        const key = 'noStandardMessageShown'
+        const state = context.globalState.get<NoStandardState>(key, {})
+        const uri = URI.parse(params.source.uri)
+        const workspaceFolder = Workspace.getWorkspaceFolder(uri)
+        const config = Workspace.getConfiguration('standard')
+        const linter = config.get('engine', 'standard')
+        if (workspaceFolder) {
+          client.info(
+            [
+              '',
+              `Failed to load the ${linterName} library for the document ${uri.fsPath}`,
+              '',
+              `To use ${linterName} please install ${linterName} by running 'npm install ${linter}' in the workspace folder ${workspaceFolder.name}`,
+              `or globally using 'npm install -g ${linter}'. You need to reopen the workspace after installing ${linterName}.`,
+              '',
+              `Alternatively you can disable ${linterName} for the workspace folder ${workspaceFolder.name} by executing the 'Disable JavaScript Standard Style' command.`
+            ].join('\n')
+          )
+          if (!state.workspaces) {
+            state.workspaces = Object.create(null)
+          }
+          if (!state.workspaces[workspaceFolder.uri.toString()]) {
+            state.workspaces[workspaceFolder.uri.toString()] = true
+            client.outputChannel.show(true)
+            await context.globalState.update(key, state)
+          }
+        } else {
+          client.info(
+            [
+              `Failed to load the ${linterName} library for the document ${uri.fsPath}`,
+              `To use ${linterName} for single JavaScript file install standard globally using 'npm install -g ${linter}'.`,
+              `You need to reopen VS Code after installing ${linter}.`
+            ].join('\n')
+          )
+          if (!state.global) {
+            state.global = true
+            client.outputChannel.show(true)
+            await context.globalState.update(key, state)
+          }
         }
-        if (!state.workspaces[workspaceFolder.uri.toString()]) {
-          state.workspaces[workspaceFolder.uri.toString()] = true
-          client.outputChannel.show(true)
-          context.globalState.update(key, state)
-        }
-      } else {
-        client.info(
-          [
-            `Failed to load the ${linterName} library for the document ${uri.fsPath}`,
-            `To use ${linterName} for single JavaScript file install standard globally using 'npm install -g ${linter}'.`,
-            `You need to reopen VS Code after installing ${linter}.`
-          ].join('\n')
-        )
-        if (!state.global) {
-          state.global = true
-          client.outputChannel.show(true)
-          context.globalState.update(key, state)
-        }
-      }
-      return {}
+        return {}
+      })
     })
-  })
+    .catch(() => {})
 
   if (dummyCommands != null) {
     dummyCommands.forEach(command => command.dispose())
@@ -694,8 +702,8 @@ export function realActivate (context: ExtensionContext): void {
       }
       client
         .sendRequest(ExecuteCommandRequest.type, params)
-        .then(undefined, () => {
-          Window.showErrorMessage(
+        .then(undefined, async () => {
+          await Window.showErrorMessage(
             `Failed to apply ${linterName} fixes to the document. Please consider opening an issue with steps to reproduce.`
           )
         })
