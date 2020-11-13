@@ -563,9 +563,11 @@ export function realActivate (context: ExtensionContext): void {
                   changeProcessCWD = !!entry.changeProcessCWD
                 }
                 if (directory != null) {
-                  if (path.isAbsolute(directory)) {
-                    directory = directory
-                  } else if (workspaceFolderPath != null && directory != null) {
+                  if (
+                    !path.isAbsolute(directory) &&
+                    workspaceFolderPath != null &&
+                    directory != null
+                  ) {
                     directory = path.join(workspaceFolderPath, directory)
                   } else {
                     directory = undefined
