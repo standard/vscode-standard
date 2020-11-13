@@ -34,8 +34,7 @@ import {
   ServerOptions,
   State as ClientState,
   TransportKind,
-  VersionedTextDocumentIdentifier,
-  WorkspaceMiddleware
+  VersionedTextDocumentIdentifier
 } from 'vscode-languageclient'
 import { URI } from 'vscode-uri'
 
@@ -477,7 +476,7 @@ export function realActivate (context: ExtensionContext): void {
         }
         const newContext: CodeActionContext = Object.assign({}, context, {
           diagnostics: standardDiagnostics
-        } as CodeActionContext)
+        })
         return next(document, range, newContext, token)
       },
       workspace: {
@@ -599,7 +598,7 @@ export function realActivate (context: ExtensionContext): void {
           }
           return result
         }
-      } as WorkspaceMiddleware
+      }
     }
   }
   const client = new LanguageClient(linterName, serverOptions, clientOptions)
