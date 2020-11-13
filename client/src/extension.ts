@@ -387,18 +387,20 @@ export function realActivate (context: ExtensionContext): void {
       const configuration = Workspace.getConfiguration('standard')
       const folders = Workspace.workspaceFolders
       return {
-        legacyModuleResolve: configuration
-          ? configuration.get('_legacyModuleResolve', false)
-          : false,
-        nodePath: configuration
-          ? configuration.get('nodePath', undefined)
-          : undefined,
-        languageIds: configuration
-          ? configuration.get('valiadate', defaultLanguages)
-          : defaultLanguages,
-        workspaceFolders: folders
-          ? folders.map(folder => folder.toString())
-          : []
+        legacyModuleResolve:
+          configuration != null
+            ? configuration.get('_legacyModuleResolve', false)
+            : false,
+        nodePath:
+          configuration != null
+            ? configuration.get('nodePath', undefined)
+            : undefined,
+        languageIds:
+          configuration != null
+            ? configuration.get('valiadate', defaultLanguages)
+            : defaultLanguages,
+        workspaceFolders:
+          folders != null ? folders.map(folder => folder.toString()) : []
       }
     },
     initializationFailedHandler: error => {
@@ -485,7 +487,7 @@ export function realActivate (context: ExtensionContext): void {
           }
           const result: Array<TextDocumentSettings | null> = []
           for (const item of params.items) {
-            if (item.section != null || !item.scopeUri) {
+            if (item.section != null || item.scopeUri == null) {
               result.push(null)
               continue
             }
@@ -505,7 +507,7 @@ export function realActivate (context: ExtensionContext): void {
               library: undefined
             }
             const document: TextDocument = syncedDocuments.get(item.scopeUri)
-            if (!document) {
+            if (document == null) {
               result.push(settings)
               continue
             }
@@ -536,7 +538,7 @@ export function realActivate (context: ExtensionContext): void {
                 settings.autoFix && config.get('autoFixOnSave', false)
             }
             const workspaceFolder = Workspace.getWorkspaceFolder(resource)
-            if (workspaceFolder) {
+            if (workspaceFolder != null) {
               settings.workspaceFolder = {
                 name: workspaceFolder.name,
                 uri: workspaceFolder.uri,
@@ -549,7 +551,7 @@ export function realActivate (context: ExtensionContext): void {
             if (Array.isArray(workingDirectories)) {
               let workingDirectory
               const workspaceFolderPath =
-                workspaceFolder && workspaceFolder.uri.scheme === 'file'
+                workspaceFolder != null && workspaceFolder.uri.scheme === 'file'
                   ? workspaceFolder.uri.fsPath
                   : undefined
               for (const entry of workingDirectories) {
@@ -561,10 +563,10 @@ export function realActivate (context: ExtensionContext): void {
                   directory = entry.directory
                   changeProcessCWD = !!entry.changeProcessCWD
                 }
-                if (directory) {
+                if (directory != null) {
                   if (path.isAbsolute(directory)) {
                     directory = directory
-                  } else if (workspaceFolderPath != null && directory) {
+                  } else if (workspaceFolderPath != null && directory != null) {
                     directory = path.join(workspaceFolderPath, directory)
                   } else {
                     directory = undefined
@@ -575,7 +577,7 @@ export function realActivate (context: ExtensionContext): void {
                       : undefined
                   if (
                     filePath != null &&
-                    directory &&
+                    directory != null &&
                     filePath.startsWith(directory)
                   ) {
                     if (workingDirectory != null) {
@@ -642,7 +644,7 @@ export function realActivate (context: ExtensionContext): void {
         const workspaceFolder = Workspace.getWorkspaceFolder(uri)
         const config = Workspace.getConfiguration('standard')
         const linter = config.get('engine', 'standard')
-        if (workspaceFolder) {
+        if (workspaceFolder != null) {
           client.info(
             [
               '',
@@ -654,7 +656,7 @@ export function realActivate (context: ExtensionContext): void {
               `Alternatively you can disable ${linterName} for the workspace folder ${workspaceFolder.name} by executing the 'Disable JavaScript Standard Style' command.`
             ].join('\n')
           )
-          if (!state.workspaces) {
+          if (state.workspaces == null) {
             state.workspaces = Object.create(null)
           }
           if (!state.workspaces[workspaceFolder.uri.toString()]) {
