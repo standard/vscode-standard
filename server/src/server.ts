@@ -32,7 +32,10 @@ import {
   TextEdit,
   VersionedTextDocumentIdentifier
 } from 'vscode-languageserver'
-import { WorkspaceChange } from 'vscode-languageserver-protocol'
+import {
+  CancellationToken,
+  WorkspaceChange
+} from 'vscode-languageserver-protocol'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
 import * as deglob from 'deglob'
@@ -185,7 +188,7 @@ function recordCodeAction (
     return undefined
   }
   const uri = document.uri
-  let edits: Map<string, AutoFix> = codeActions.get(uri)!
+  let edits = codeActions.get(uri)
   if (edits == null) {
     edits = new Map<string, AutoFix>()
     codeActions.set(uri, edits)
@@ -230,7 +233,7 @@ function isUNC (path: string): boolean {
     return false
   }
 
-  if (!path || path.length < 5) {
+  if (path.length === 0 || path.length < 5) {
     // at least \\a\b
     return false
   }
@@ -262,7 +265,7 @@ function isUNC (path: string): boolean {
 }
 
 function getFilePath (documentOrUri: string | URI): string {
-  if (!documentOrUri) {
+  if (documentOrUri == null) {
     return ''
   }
   const uri = Is.string(documentOrUri)
@@ -305,13 +308,13 @@ string,
 Thenable<TextDocumentSettings>
 >()
 
-function resolveSettings (
+async function resolveSettings (
   document: TextDocument
-): Thenable<TextDocumentSettings> {
+): Promise<TextDocumentSettings> {
   const uri = document.uri
   let resultPromise = document2Settings.get(uri)
-  if (resultPromise) {
-    return resultPromise
+  if (resultPromise != null) {
+    return await resultPromise
   }
   resultPromise = connection.workspace
     .getConfiguration({ scopeUri: uri, section: '' })
@@ -343,53 +346,28 @@ function resolveSettings (
         if (pkgExists) {
           const pkgStr = fs.readFileSync(pkgPath, 'utf8')
           const pkg = JSON.parse(pkgStr)
-          if (
-            pkg != null &&
-            pkg.devDependencies != null &&
-            pkg.devDependencies.standard
-          ) {
+          if (pkg?.devDependencies?.standard != null) {
             linter = 'standard'
             linterName = 'JavaScript Standard Style'
-          } else if (
-            pkg != null &&
-            pkg.devDependencies != null &&
-            pkg.devDependencies.semistandard
-          ) {
+          } else if (pkg?.devDependencies?.semistandard != null) {
             linter = 'semistandard'
             linterName = 'JavaScript Semi-Standard Style'
-          } else if (
-            pkg != null &&
-            pkg.devDependencies != null &&
-            pkg.devDependencies.standardx
-          ) {
+          } else if (pkg?.devDependencies?.standardx != null) {
             linter = 'standardx'
             linterName = 'JavaScript Standard Style with custom tweaks'
-          } else if (
-            pkg != null &&
-            pkg.devDependencies != null &&
-            pkg.devDependencies['ts-standard']
-          ) {
+          } else if (pkg?.devDependencies['ts-standard'] != null) {
             linter = 'ts-standard'
             linterName = 'TypeScript Standard Style'
           }
           // if standard, semistandard, standardx, ts-standard config presented in package.json
           if (
-            (pkg != null &&
-              pkg.devDependencies != null &&
-              pkg.devDependencies.standard) ||
-            (pkg != null &&
-              pkg.devDependencies != null &&
-              pkg.devDependencies.semistandard) ||
-            (pkg != null &&
-              pkg.devDependencies != null &&
-              pkg.devDependencies.standardx) ||
-            (pkg != null &&
-              pkg.devDependencies != null &&
-              pkg.devDependencies['ts-standard'])
+            pkg?.devDependencies?.standard != null ||
+            pkg?.devDependencies?.semistandard != null ||
+            pkg?.devDependencies?.standardx != null ||
+            pkg?.devDependencies['ts-standard'] != null
           ) {
-            if (pkg[linter]) {
-              // if [linter] presented in package.json
-              // combine the global one.
+            if (pkg[linter] != null) {
+              // if [linter] presented in package.json combine the global one.
               settings.engine = linter
               settings.options = Object.assign(
                 {},
@@ -410,7 +388,7 @@ function resolveSettings (
       if (uri.scheme === 'file') {
         const file = uri.fsPath
         const directory = path.dirname(file)
-        if (settings.nodePath) {
+        if (settings.nodePath != null) {
           promise = Files.resolve(
             linter,
             settings.nodePath,
@@ -426,7 +404,7 @@ function resolveSettings (
         promise = Files.resolve(
           linter,
           globalNodePath,
-          settings.workspaceFolder
+          settings.workspaceFolder != null
             ? settings.workspaceFolder.uri.toString()
             : undefined,
           trace
@@ -437,10 +415,10 @@ function resolveSettings (
           let library = path2Library.get(path)
           if (library == null) {
             library = require(path)
-            if (!library?.lintText) {
+            if (library?.lintText == null) {
               settings.validate = false
               connection.console.error(
-                `The ${linterName} library loaded from ${path} doesn\'t export a lintText.`
+                `The ${linterName} library loaded from ${path} doesn't export a lintText.`
               )
             } else {
               connection.console.info(
@@ -448,15 +426,17 @@ function resolveSettings (
               )
               settings.library = library
             }
-            path2Library.set(path, library!)
+            if (library != null) {
+              path2Library.set(path, library)
+            }
           } else {
             settings.library = library
           }
           return settings
         },
-        () => {
+        async () => {
           settings.validate = false
-          connection.sendRequest(NoStandardLibraryRequest.type, {
+          await connection.sendRequest(NoStandardLibraryRequest.type, {
             source: { uri: document.uri }
           })
           return settings
@@ -464,7 +444,7 @@ function resolveSettings (
       )
     })
   document2Settings.set(uri, resultPromise)
-  return resultPromise
+  return await resultPromise
 }
 
 interface Notifcation<P> {
@@ -495,7 +475,7 @@ class BufferedMessageQueue {
   }
   >
 
-  private timer: NodeJS.Timer | undefined
+  private timer: NodeJS.Immediate | undefined
 
   constructor (private readonly connection: IConnection) {
     this.queue = []
@@ -508,14 +488,13 @@ class BufferedMessageQueue {
     handler: RequestHandler<any, any, any>,
     versionProvider?: VersionProvider<P>
   ): void {
-    this.connection.onRequest(type, (params, token) => {
-      return new Promise<R>((resolve, reject) => {
+    this.connection.onRequest(type, async (params, token) => {
+      return await new Promise<R>((resolve, reject) => {
         this.queue.push({
           method: type.method,
           params: params,
-          documentVersion: versionProvider
-            ? versionProvider(params)
-            : undefined,
+          documentVersion:
+            versionProvider != null ? versionProvider(params) : undefined,
           resolve: resolve,
           reject: reject,
           token: token
@@ -568,7 +547,6 @@ class BufferedMessageQueue {
     if (this.timer != null || this.queue.length === 0) {
       return
     }
-    // @ts-expect-error next-line
     this.timer = setImmediate(() => {
       this.timer = undefined
       this.processQueue()
@@ -583,6 +561,7 @@ class BufferedMessageQueue {
     if (Request.is(message)) {
       const requestMessage = message
       if (
+        // eslint-disable-next-line
         requestMessage.token != null &&
         requestMessage.token.isCancellationRequested
       ) {
@@ -610,9 +589,12 @@ class BufferedMessageQueue {
             'Request got cancelled'
           )
         )
-        return
+        return undefined
       }
-      const result = elem.handler(requestMessage.params, requestMessage.token!)
+      const result = elem.handler(
+        requestMessage.params,
+        requestMessage.token as CancellationToken
+      )
       if (Thenable.is(result)) {
         result.then(
           value => {
@@ -629,8 +611,7 @@ class BufferedMessageQueue {
       const notificationMessage = message
       const elem = this.notificationHandlers.get(notificationMessage.method)
       if (
-        elem != null &&
-        elem.versionProvider != null &&
+        elem?.versionProvider != null &&
         notificationMessage?.documentVersion !==
           elem.versionProvider(notificationMessage.params)
       ) {
@@ -648,8 +629,9 @@ const messageQueue: BufferedMessageQueue = new BufferedMessageQueue(connection)
 
 messageQueue.onNotification(
   ValidateNotification.type,
-  document => {
-    validateSingle(document, true)
+  // eslint-disable-next-line
+  async document => {
+    await validateSingle(document, true)
   },
   (document): number => {
     return document.version
@@ -658,33 +640,31 @@ messageQueue.onNotification(
 
 // The documents manager listen for text document create, change and close on the connection
 documents.listen(connection)
-documents.onDidOpen(event => {
-  resolveSettings(event.document).then(settings => {
-    if (!settings.validate) {
-      return
-    }
-    if (settings.run === 'onSave') {
-      messageQueue.addNotificationMessage(
-        ValidateNotification.type,
-        event.document,
-        event.document.version
-      )
-    }
-  })
-})
-
-// A text document has changed. Validate the document according the run setting.
-documents.onDidChangeContent(event => {
-  resolveSettings(event.document).then(settings => {
-    if (!settings.validate || settings.run !== 'onType') {
-      return
-    }
+documents.onDidOpen(async event => {
+  const settings = await resolveSettings(event.document)
+  if (!settings.validate) {
+    return undefined
+  }
+  if (settings.run === 'onSave') {
     messageQueue.addNotificationMessage(
       ValidateNotification.type,
       event.document,
       event.document.version
     )
-  })
+  }
+})
+
+// A text document has changed. Validate the document according the run setting.
+documents.onDidChangeContent(async event => {
+  const settings = await resolveSettings(event.document)
+  if (!settings.validate || settings.run !== 'onType') {
+    return
+  }
+  messageQueue.addNotificationMessage(
+    ValidateNotification.type,
+    event.document,
+    event.document.version
+  )
 })
 
 function getFixes (textDocument: TextDocument): TextEdit[] {
@@ -696,10 +676,10 @@ function getFixes (textDocument: TextDocument): TextEdit[] {
         textDocument.positionAt(editInfo.edit.range[0]),
         textDocument.positionAt(editInfo.edit.range[1])
       ),
-      editInfo.edit.text || ''
+      editInfo.edit.text ?? ''
     )
   }
-  if (edits) {
+  if (edits != null) {
     const fixes = new Fixes(edits)
     if (
       fixes.isEmpty() ||
@@ -733,28 +713,26 @@ documents.onWillSaveWaitUntil(event => {
 })
 
 // A text document has been saved. Validate the document according the run setting.
-documents.onDidSave(event => {
-  resolveSettings(event.document).then(settings => {
-    if (!settings.validate || settings.run !== 'onSave') {
-      return
-    }
-    messageQueue.addNotificationMessage(
-      ValidateNotification.type,
-      event.document,
-      event.document.version
-    )
-  })
+documents.onDidSave(async event => {
+  const settings = await resolveSettings(event.document)
+  if (!settings.validate || settings.run !== 'onSave') {
+    return undefined
+  }
+  messageQueue.addNotificationMessage(
+    ValidateNotification.type,
+    event.document,
+    event.document.version
+  )
 })
 
-documents.onDidClose(event => {
-  resolveSettings(event.document).then(settings => {
-    const uri = event.document.uri
-    document2Settings.delete(uri)
-    codeActions.delete(uri)
-    if (settings.validate) {
-      connection.sendDiagnostics({ uri: uri, diagnostics: [] })
-    }
-  })
+documents.onDidClose(async event => {
+  const settings = await resolveSettings(event.document)
+  const uri = event.document.uri
+  document2Settings.delete(uri)
+  codeActions.delete(uri)
+  if (settings.validate) {
+    connection.sendDiagnostics({ uri: uri, diagnostics: [] })
+  }
 })
 
 function environmentChanged (): void {
@@ -797,9 +775,13 @@ connection.onInitialize(_params => {
   }
 })
 
-connection.onInitialized(() => {
-  connection.client.register(DidChangeConfigurationNotification.type, undefined)
-  connection.client.register(
+// eslint-disable-next-line
+connection.onInitialized(async () => {
+  await connection.client.register(
+    DidChangeConfigurationNotification.type,
+    undefined
+  )
+  await connection.client.register(
     DidChangeWorkspaceFoldersNotification.type,
     undefined
   )
@@ -834,9 +816,8 @@ function validateSingle (
   document: TextDocument,
   publishDiagnostics: boolean = true
 ): Thenable<void> {
-  // We validate document in a queue but open / close documents directly. So we need to deal with the
-  // fact that a document might be gone from the server.
-  if (!documents.get(document.uri)) {
+  // We validate document in a queue but open / close documents directly. So we need to deal with the fact that a document might be gone from the server.
+  if (documents.get(document.uri) == null) {
     return Promise.resolve(undefined)
   }
   return resolveSettings(document).then(settings => {
@@ -852,11 +833,11 @@ function validateSingle (
       let status
       for (const handler of singleErrorHandlers) {
         status = handler(err, document, settings.library)
-        if (status) {
+        if (status != null) {
           break
         }
       }
-      status = status || StatusNotification.Status.error
+      status = status ?? StatusNotification.Status.error
       connection.sendNotification(StatusNotification.type, { state: status })
     }
   })
@@ -875,7 +856,7 @@ function validateMany (documents: TextDocument[]): void {
 function getMessage (err: any, document: TextDocument): string {
   let result: string | null = null
   if (typeof err.message === 'string' || err.message instanceof String) {
-    result = <string>err.message
+    result = err.message as string
     result = result.replace(/\r?\n/g, ' ')
     if (/^CLI: /.test(result)) {
       result = result.substr(5)
@@ -906,18 +887,18 @@ function validate (
     if (file != null) {
       if (settings.workingDirectory != null) {
         newOptions.cwd = settings.workingDirectory.directory
-        if (settings.workingDirectory.changeProcessCWD) {
+        if (settings.workingDirectory.changeProcessCWD != null && settings.workingDirectory.changeProcessCWD) {
           process.chdir(settings.workingDirectory.directory)
         }
-      } else if (settings.workspaceFolder) {
+      } else if (settings.workspaceFolder != null) {
         const workspaceFolderUri = settings.workspaceFolder.uri
         if (workspaceFolderUri.scheme === 'file') {
           newOptions.cwd = workspaceFolderUri.fsPath
           process.chdir(workspaceFolderUri.fsPath)
         }
-      } else if (!settings.workspaceFolder && !isUNC(file)) {
+      } else if (settings.workspaceFolder == null && !isUNC(file)) {
         const directory = path.dirname(file)
-        if (directory) {
+        if (directory.length > 0) {
           if (path.isAbsolute(directory)) {
             newOptions.cwd = directory
           }
@@ -944,16 +925,15 @@ function validate (
             return callback(null)
           }
           deglob([file], deglobOpts, function (err: any, files: any) {
-            if (err) {
+            if (err != null) {
               return callback(err)
             }
             if (files.length === 1) {
               // got a file
               return callback(null)
             } else {
-              // no file
-              // actually it's no an error,
-              // just need to stop the later.
+              // no file actually it's not an error, just need to stop the later.
+              // eslint-disable-next-line
               return callback(`${file} ignored.`)
             }
           })
@@ -964,7 +944,7 @@ function validate (
               error,
               report
             ) {
-              if (error) {
+              if (error != null) {
                 tryHandleMissingModule(error, document, settings.library)
                 return callback(error)
               }
@@ -975,15 +955,17 @@ function validate (
         function (report: StanardReport, callback: any) {
           const diagnostics: Diagnostic[] = []
           if (
-            report &&
-            report.results &&
+            report?.results != null &&
             Array.isArray(report.results) &&
             report.results.length > 0
           ) {
             const docReport = report.results[0]
-            if (docReport.messages && Array.isArray(docReport.messages)) {
+            if (
+              docReport.messages != null &&
+              Array.isArray(docReport.messages)
+            ) {
               docReport.messages.forEach(problem => {
-                if (problem) {
+                if (problem != null) {
                   const diagnostic = makeDiagnostic(problem, settings.engine)
                   diagnostics.push(diagnostic)
                   if (settings.autoFix) {
@@ -1000,13 +982,12 @@ function validate (
         }
       ],
       function (err: any, _results: any) {
-        if (err) {
+        if (err != null) {
           return console.log(err)
         }
       }
     )
-  } catch (e) {
-    console.log(e)
+  } catch {
   } finally {
     if (cwd !== process.cwd()) {
       process.chdir(cwd)
@@ -1059,14 +1040,14 @@ function tryHandleConfigError (
   document: TextDocument,
   library: StandardModule | undefined
 ): StatusNotification.Status | undefined {
-  if (!error.message) {
+  if (error.message == null) {
     return undefined
   }
 
   function handleFileName (filename: string): StatusNotification.Status {
     if (!configErrorReported.has(filename)) {
       connection.console.error(getMessage(error, document))
-      if (!documents.get(URI.file(filename).toString())) {
+      if (documents.get(URI.file(filename).toString()) == null) {
         connection.window.showInformationMessage(getMessage(error, document))
       }
       configErrorReported.set(filename, library)
@@ -1077,19 +1058,19 @@ function tryHandleConfigError (
   let matches = /Cannot read config file:\s+(.*)\nError:\s+(.*)/.exec(
     error.message
   )
-  if (matches && matches.length === 3) {
+  if (matches != null && matches.length === 3) {
     return handleFileName(matches[1])
   }
 
-  matches = /(.*):\n\s*Configuration for rule \"(.*)\" is /.exec(error.message)
-  if (matches && matches.length === 3) {
+  matches = /(.*):\n\s*Configuration for rule "(.*)" is /.exec(error.message)
+  if (matches != null && matches.length === 3) {
     return handleFileName(matches[1])
   }
 
   matches = /Cannot find module '([^']*)'\nReferenced from:\s+(.*)/.exec(
     error.message
   )
-  if (matches && matches.length === 3) {
+  if (matches != null && matches.length === 3) {
     return handleFileName(matches[2])
   }
 
@@ -1106,7 +1087,7 @@ function tryHandleMissingModule (
   document: TextDocument,
   library: StandardModule | undefined
 ): StatusNotification.Status | undefined {
-  if (!error.message) {
+  if (error.message == null) {
     return undefined
   }
 
@@ -1117,13 +1098,13 @@ function tryHandleMissingModule (
   ): StatusNotification.Status {
     if (!missingModuleReported.has(plugin)) {
       const fsPath = getFilePath(document.uri)
-      missingModuleReported.set(plugin, library!)
+      missingModuleReported.set(plugin, library as StandardModule)
       if (error.messageTemplate === 'plugin-missing') {
         connection.console.error(
           [
             '',
             `${error.message.toString()}`,
-            `Happend while validating ${fsPath || document.uri}`,
+            `Happend while validating ${fsPath ?? document.uri}`,
             'This can happen for a couple of reasons:',
             '1. The plugin name is spelled incorrectly in JavaScript Standard Style configuration.',
             `2. If JavaScript Standard Style is installed globally, then make sure ${module} is installed globally as well.`,
@@ -1134,7 +1115,7 @@ function tryHandleMissingModule (
         connection.console.error(
           [
             `${error.message.toString()}`,
-            `Happend while validating ${fsPath || document.uri}`
+            `Happend while validating ${fsPath ?? document.uri}`
           ].join('\n')
         )
       }
@@ -1145,7 +1126,7 @@ function tryHandleMissingModule (
   const matches = /Failed to load plugin (.*): Cannot find module (.*)/.exec(
     error.message
   )
-  if (matches && matches.length === 3) {
+  if (matches != null && matches.length === 3) {
     return handleMissingModule(matches[1], matches[2], error)
   }
 
@@ -1168,13 +1149,13 @@ messageQueue.registerNotification(
     missingModuleReported = Object.create(null)
     params.changes.forEach((change: any) => {
       const fsPath = getFilePath(change.uri)
-      if (!fsPath || isUNC(fsPath)) {
-        return
+      if (fsPath.length === 0 || isUNC(fsPath)) {
+        return undefined
       }
       const dirname = path.dirname(fsPath)
-      if (dirname) {
+      if (dirname.length > 0) {
         const library = configErrorReported.get(fsPath)
-        if (library) {
+        if (library != null) {
           try {
             library.lintText('')
             configErrorReported.delete(fsPath)
@@ -1190,7 +1171,7 @@ class Fixes {
   constructor (private readonly edits: Map<string, AutoFix>) {}
 
   public static overlaps (lastEdit: AutoFix, newEdit: AutoFix): boolean {
-    return !!lastEdit && lastEdit.edit.range[1] > newEdit.edit.range[0]
+    return lastEdit.edit.range[1] > newEdit.edit.range[0]
   }
 
   public isEmpty (): boolean {
@@ -1209,7 +1190,7 @@ class Fixes {
     for (const diagnostic of diagnostics) {
       const key = computeKey(diagnostic)
       const editInfo = this.edits.get(key)
-      if (editInfo) {
+      if (editInfo != null) {
         result.push(editInfo)
       }
     }
@@ -1261,7 +1242,7 @@ messageQueue.registerRequest(
     const result: Command[] = []
     const uri = params.textDocument.uri
     const edits = codeActions.get(uri)
-    if (!edits) {
+    if (edits == null) {
       return result
     }
 
@@ -1283,7 +1264,7 @@ messageQueue.registerRequest(
           textDocument.positionAt(editInfo.edit.range[0]),
           textDocument.positionAt(editInfo.edit.range[1])
         ),
-        editInfo.edit.text || ''
+        editInfo.edit.text ?? ''
       )
     }
 
@@ -1298,7 +1279,7 @@ messageQueue.registerRequest(
       if (editInfo != null) {
         workspaceChange
           .getTextEditChange({ uri, version: documentVersion })
-          .add(createTextEdit(editInfo)!)
+          .add(createTextEdit(editInfo) as TextEdit)
         commands.set(CommandIds.applySingleFix, workspaceChange)
         result.push(Command.create(editInfo.label, CommandIds.applySingleFix))
       }
@@ -1313,6 +1294,7 @@ messageQueue.registerRequest(
           documentVersion = editInfo.documentVersion
         }
         if (
+          // eslint-disable-next-line
           editInfo.ruleId === ruleId! &&
           !Fixes.overlaps(getLastEdit(same), editInfo)
         ) {
@@ -1328,10 +1310,13 @@ messageQueue.registerRequest(
           uri,
           version: documentVersion
         })
-        same.map(createTextEdit).forEach(edit => sameTextChange.add(edit!))
+        same
+          .map(createTextEdit)
+          .forEach(edit => sameTextChange.add(edit as TextEdit))
         commands.set(CommandIds.applySameFixes, sameFixes)
         result.push(
           Command.create(
+            // eslint-disable-next-line
             `Fix all ${ruleId!} problems`,
             CommandIds.applySameFixes
           )
@@ -1343,7 +1328,9 @@ messageQueue.registerRequest(
           uri,
           version: documentVersion
         })
-        all.map(createTextEdit).forEach(edit => allTextChange.add(edit!))
+        all
+          .map(createTextEdit)
+          .forEach(edit => allTextChange.add(edit as TextEdit))
         commands.set(CommandIds.applyAllFixes, allFixes)
         result.push(
           Command.create(
@@ -1357,7 +1344,7 @@ messageQueue.registerRequest(
   },
   params => {
     const document = documents.get(params.textDocument.uri)
-    return document ? document.version : 1
+    return document != null ? document.version : 1
   }
 )
 
@@ -1366,12 +1353,12 @@ function computeAllFixes (
 ): Array<TextEdit | undefined> | undefined {
   const uri = identifier.uri
   const textDocument = documents.get(uri)
-  if (!textDocument || identifier.version !== textDocument.version) {
+  if (textDocument == null || identifier.version !== textDocument.version) {
     return undefined
   }
   const edits = codeActions.get(uri)
 
-  if (edits) {
+  if (edits != null) {
     const fixes = new Fixes(edits)
     if (!fixes.isEmpty()) {
       return fixes.getOverlapFree().map(editInfo => {
@@ -1401,10 +1388,10 @@ messageQueue.registerRequest(
       if (edits != null) {
         workspaceChange = new WorkspaceChange()
         const textChange = workspaceChange.getTextEditChange(identifier)
-        edits.forEach(edit => textChange.add(edit!))
+        edits.forEach(edit => textChange.add(edit as TextEdit))
       }
     } else {
-      workspaceChange = commands.get(params.command)!
+      workspaceChange = commands.get(params.command) as WorkspaceChange
     }
 
     if (workspaceChange == null) {
@@ -1413,12 +1400,16 @@ messageQueue.registerRequest(
     return connection.workspace.applyEdit(workspaceChange.edit).then(
       response => {
         if (!response.applied) {
-          connection.console.error(`Failed to apply command: ${params.command}`)
+          connection.console.error(
+            `Failed to apply command: ${params.command as string}`
+          )
         }
         return {}
       },
       () => {
-        connection.console.error(`Failed to apply command: ${params.command}`)
+        connection.console.error(
+          `Failed to apply command: ${params.command as string}`
+        )
       }
     )
   },

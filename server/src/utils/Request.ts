@@ -12,9 +12,8 @@ export interface Request<P, R> {
 export function is (value: any): value is Request<any, any> {
   const candidate: Request<any, any> = value
   return (
-    candidate != null &&
-    !!candidate.token &&
-    !!candidate.resolve &&
-    !!candidate.reject
+    candidate?.token != null &&
+    candidate?.resolve != null &&
+    candidate?.reject != null
   )
 }
