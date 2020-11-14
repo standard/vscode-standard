@@ -561,8 +561,7 @@ class BufferedMessageQueue {
     if (Request.is(message)) {
       const requestMessage = message
       if (
-        // eslint-disable-next-line
-        requestMessage.token != null &&
+        requestMessage?.token?.isCancellationRequested != null &&
         requestMessage.token.isCancellationRequested
       ) {
         requestMessage.reject(
