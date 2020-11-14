@@ -2,6 +2,8 @@
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+import * as async from 'async'
+import * as deglob from 'deglob'
 import * as fs from 'fs'
 import * as path from 'path'
 import {
@@ -38,16 +40,14 @@ import {
 } from 'vscode-languageserver-protocol'
 import { TextDocument } from 'vscode-languageserver-textdocument'
 import { URI } from 'vscode-uri'
-import * as deglob from 'deglob'
-import * as async from 'async'
 
-import * as Is from './utils/Is'
-import * as StatusNotification from './utils/StatusNotification'
-import * as NoStandardLibraryRequest from './utils/NoStandardLibraryRequest'
-import * as DirectoryItem from './utils/DirectoryItem'
-import * as NoConfigRequest from './utils/NoConfigRequest'
 import * as CommandIds from './utils/CommandIds'
+import * as DirectoryItem from './utils/DirectoryItem'
+import * as Is from './utils/Is'
+import * as NoConfigRequest from './utils/NoConfigRequest'
+import * as NoStandardLibraryRequest from './utils/NoStandardLibraryRequest'
 import * as Request from './utils/Request'
+import * as StatusNotification from './utils/StatusNotification'
 import * as Thenable from './utils/Thenable'
 import * as ValidateNotification from './utils/ValidateNotification'
 
@@ -887,7 +887,10 @@ function validate (
     if (file != null) {
       if (settings.workingDirectory != null) {
         newOptions.cwd = settings.workingDirectory.directory
-        if (settings.workingDirectory.changeProcessCWD != null && settings.workingDirectory.changeProcessCWD) {
+        if (
+          settings.workingDirectory.changeProcessCWD != null &&
+          settings.workingDirectory.changeProcessCWD
+        ) {
           process.chdir(settings.workingDirectory.directory)
         }
       } else if (settings.workspaceFolder != null) {

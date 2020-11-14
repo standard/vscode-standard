@@ -38,11 +38,11 @@ import {
 } from 'vscode-languageclient'
 import { URI } from 'vscode-uri'
 
-import * as Is from './utils/Is'
-import * as ValidateItem from './utils/ValidateItem'
 import * as DirectoryItem from './utils/DirectoryItem'
-import * as StatusNotification from './utils/StatusNotification'
+import * as Is from './utils/Is'
 import * as NoStandardLibraryRequest from './utils/NoStandardLibraryRequest'
+import * as StatusNotification from './utils/StatusNotification'
+import * as ValidateItem from './utils/ValidateItem'
 
 type LinterValues = 'standard' | 'semistandard' | 'standardx' | 'ts-standard'
 type LinterNameValues =
