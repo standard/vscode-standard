@@ -116,11 +116,11 @@ function pickFolder (
 
 async function enable (): Promise<void> {
   const folders = Workspace.workspaceFolders
-  if (folders == null || folders.length === 0) {
+  if (folders == null) {
     await Window.showWarningMessage(
       `${linterName} can only be enabled if VS Code is opened on a workspace folder.`
     )
-    return
+    return undefined
   }
   const disabledFolders = folders.filter(
     folder =>
@@ -143,7 +143,7 @@ async function enable (): Promise<void> {
     `Select a workspace folder to enable ${linterName} for`
   )
   if (folder == null) {
-    return
+    return undefined
   }
   await Workspace.getConfiguration('standard', folder.uri).update(
     'enable',
@@ -153,11 +153,11 @@ async function enable (): Promise<void> {
 
 async function disable (): Promise<void> {
   const folders = Workspace.workspaceFolders
-  if (folders == null || folders.length === 0) {
+  if (folders == null) {
     await Window.showErrorMessage(
       `${linterName} can only be disabled if VS Code is opened on a workspace folder.`
     )
-    return
+    return undefined
   }
   const enabledFolders = folders.filter(folder =>
     Workspace.getConfiguration('standard', folder.uri).get('enable', true)
@@ -179,7 +179,7 @@ async function disable (): Promise<void> {
     `Select a workspace folder to disable ${linterName} for`
   )
   if (folder == null) {
-    return
+    return undefined
   }
   await Workspace.getConfiguration('standard', folder.uri).update(
     'enable',
@@ -200,7 +200,7 @@ function shouldBeValidated (textDocument: TextDocument): boolean {
   if (!config.get('enable', true)) {
     return false
   }
-  const validate = config.get<ValidateItem.ValidateArray>(
+  const validate = config.get<Array<ValidateItem.ValidateItem | string>>(
     'validate',
     defaultLanguages
   )
@@ -402,7 +402,7 @@ export function realActivate (context: ExtensionContext): void {
             ? configuration.get('validate', defaultLanguages)
             : defaultLanguages,
         workspaceFolders:
-          folders != null ? folders.map(folder => folder.uri.toString()) : []
+          folders != null ? folders.map(folder => folder.name) : []
       }
     },
     initializationFailedHandler: error => {
@@ -489,7 +489,7 @@ export function realActivate (context: ExtensionContext): void {
           }
           const result: Array<TextDocumentSettings | null> = []
           for (const item of params.items) {
-            if (item.section != null || item.scopeUri == null) {
+            if (item.section.length > 0 || item.scopeUri.length === 0) {
               result.push(null)
               continue
             }
@@ -514,10 +514,9 @@ export function realActivate (context: ExtensionContext): void {
               continue
             }
             if (config.get('enabled', true)) {
-              const validateItems = config.get<ValidateItem.ValidateArray>(
-                'validate',
-                defaultLanguages
-              )
+              const validateItems = config.get<
+              Array<ValidateItem.ValidateItem | string>
+              >('validate', defaultLanguages)
               for (const item of validateItems) {
                 if (Is.string(item) && item === document.languageId) {
                   settings.validate = true

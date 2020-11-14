@@ -345,7 +345,7 @@ function resolveSettings (
           const pkg = JSON.parse(pkgStr)
           if (
             pkg != null &&
-            pkg.devDependencies &&
+            pkg.devDependencies != null &&
             pkg.devDependencies.standard
           ) {
             linter = 'standard'
@@ -365,8 +365,8 @@ function resolveSettings (
             linter = 'standardx'
             linterName = 'JavaScript Standard Style with custom tweaks'
           } else if (
-            pkg &&
-            pkg.devDependencies &&
+            pkg != null &&
+            pkg.devDependencies != null &&
             pkg.devDependencies['ts-standard']
           ) {
             linter = 'ts-standard'
@@ -435,7 +435,7 @@ function resolveSettings (
       return await promise.then(
         path => {
           let library = path2Library.get(path)
-          if (library != null) {
+          if (library == null) {
             library = require(path)
             if (!library?.lintText) {
               settings.validate = false
@@ -596,7 +596,7 @@ class BufferedMessageQueue {
       }
       const elem = this.requestHandlers.get(requestMessage.method)
       if (elem == null) {
-        return
+        return undefined
       }
       if (
         elem.versionProvider != null &&
@@ -656,8 +656,7 @@ messageQueue.onNotification(
   }
 )
 
-// The documents manager listen for text document create, change
-// and close on the connection
+// The documents manager listen for text document create, change and close on the connection
 documents.listen(connection)
 documents.onDidOpen(event => {
   resolveSettings(event.document).then(settings => {
@@ -723,8 +722,7 @@ documents.onWillSaveWaitUntil(event => {
     if (!settings.autoFixOnSave) {
       return []
     }
-    // If we validate on save and want to apply fixes on will save
-    // we need to validate the file.
+    // If we validate on save and want to apply fixes on will save, we need to validate the file.
     if (settings.run === 'onSave') {
       // Do not queue this since we want to get the fixes as fast as possible.
       return validateSingle(document, false).then(() => getFixes(document))
@@ -1165,8 +1163,7 @@ function showErrorMessage (
 messageQueue.registerNotification(
   DidChangeWatchedFilesNotification.type,
   params => {
-    // A .eslintrc has change. No smartness here.
-    // Simply revalidate all file.
+    // A .eslintrc has change. No smartness here. Simply revalidate all files.
     noConfigReported = Object.create(null)
     missingModuleReported = Object.create(null)
     params.changes.forEach((change: any) => {
