@@ -219,7 +219,9 @@ function shouldBeValidated (textDocument: TextDocument): boolean {
 
 export async function activate (context: ExtensionContext): Promise<void> {
   let activated: boolean
+  // eslint-disable-next-line
   let openListener: Disposable
+  // eslint-disable-next-line
   let configurationListener: Disposable
   function didOpenTextDocument (textDocument: TextDocument): void {
     if (activated) {
@@ -339,6 +341,7 @@ export function realActivate (context: ExtensionContext): void {
     }
   }
 
+  // eslint-disable-next-line
   let defaultErrorHandler: ErrorHandler
   let serverCalledProcessExit: boolean = false
 
@@ -396,10 +399,10 @@ export function realActivate (context: ExtensionContext): void {
             : undefined,
         languageIds:
           configuration != null
-            ? configuration.get('valiadate', defaultLanguages)
+            ? configuration.get('validate', defaultLanguages)
             : defaultLanguages,
         workspaceFolders:
-          folders != null ? folders.map(folder => folder.toString()) : []
+          folders != null ? folders.map(folder => folder.uri.toString()) : []
       }
     },
     initializationFailedHandler: error => {
@@ -460,7 +463,7 @@ export function realActivate (context: ExtensionContext): void {
       provideCodeActions: (document, range, context, token, next) => {
         if (
           !syncedDocuments.has(document.uri.toString()) ||
-          context.diagnostics != null ||
+          context.diagnostics == null ||
           context.diagnostics.length === 0
         ) {
           return []
@@ -569,7 +572,7 @@ export function realActivate (context: ExtensionContext): void {
                     directory != null
                   ) {
                     directory = path.join(workspaceFolderPath, directory)
-                  } else {
+                  } else if (!path.isAbsolute(directory)) {
                     directory = undefined
                   }
                   const filePath =
@@ -627,6 +630,7 @@ export function realActivate (context: ExtensionContext): void {
         updateStatus(params.state)
       })
 
+      // eslint-disable-next-line
       client.onNotification(exitCalled, async params => {
         serverCalledProcessExit = true
         client.error(

@@ -186,7 +186,7 @@ function recordCodeAction (
   }
   const uri = document.uri
   let edits: Map<string, AutoFix> = codeActions.get(uri)!
-  if (edits != null) {
+  if (edits == null) {
     edits = new Map<string, AutoFix>()
     codeActions.set(uri, edits)
   }
@@ -905,7 +905,7 @@ function validate (
   const file = getFilePath(uri)
   const cwd = process.cwd()
   try {
-    if (file !== '') {
+    if (file != null) {
       if (settings.workingDirectory != null) {
         newOptions.cwd = settings.workingDirectory.directory
         if (settings.workingDirectory.changeProcessCWD) {
