@@ -1173,7 +1173,7 @@ class Fixes {
   constructor (private readonly edits: Map<string, AutoFix>) {}
 
   public static overlaps (lastEdit: AutoFix, newEdit: AutoFix): boolean {
-    return lastEdit.edit.range[1] > newEdit.edit.range[0]
+    return lastEdit != null && lastEdit.edit.range[1] > newEdit.edit.range[0]
   }
 
   public isEmpty (): boolean {
