@@ -92,7 +92,7 @@ interface StandardProblem {
   endLine?: number
   endColumn?: number
   severity: number
-  ruleId: string
+  ruleId?: string
   message: string
   fix?: StandardAutoFixEdit
 }
@@ -628,10 +628,9 @@ const messageQueue: BufferedMessageQueue = new BufferedMessageQueue(connection)
 
 messageQueue.onNotification(
   ValidateNotification.type,
-  // eslint-disable-next-line
-  async document => {
+  (async (document: TextDocument) => {
     await validateSingle(document, true)
-  },
+  }) as unknown as () => void,
   (document): number => {
     return document.version
   }
@@ -774,8 +773,7 @@ connection.onInitialize(_params => {
   }
 })
 
-// eslint-disable-next-line
-connection.onInitialized(async () => {
+connection.onInitialized((async () => {
   await connection.client.register(
     DidChangeConfigurationNotification.type,
     undefined
@@ -784,7 +782,7 @@ connection.onInitialized(async () => {
     DidChangeWorkspaceFoldersNotification.type,
     undefined
   )
-})
+}) as unknown as () => void)
 
 messageQueue.registerNotification(
   DidChangeConfigurationNotification.type,
@@ -917,26 +915,25 @@ function validate (
     }
     async.waterfall(
       [
-        function (callback: any) {
+        function (next: (err?: any) => void) {
           // Clean previously computed code actions.
           codeActions.delete(uri)
-          callback(null)
+          next(null)
         },
-        function (callback: any) {
+        function (next: (err?: any) => void) {
           if (typeof file === 'undefined') {
-            return callback(null)
+            return next(null)
           }
           deglob([file], deglobOpts, function (err: any, files: any) {
             if (err != null) {
-              return callback(err)
+              return next(err)
             }
             if (files.length === 1) {
               // got a file
-              return callback(null)
+              return next(null)
             } else {
               // no file actually it's not an error, just need to stop the later.
-              // eslint-disable-next-line
-              return callback(`${file} ignored.`)
+              return next(`${file} ignored.`)
             }
           })
         },
@@ -1255,7 +1252,7 @@ messageQueue.registerRequest(
 
     const textDocument = documents.get(uri)
     let documentVersion: number = -1
-    let ruleId: string
+    let ruleId: string | null = null
 
     function createTextEdit (editInfo: AutoFix): TextEdit | undefined {
       if (textDocument == null) {
@@ -1296,8 +1293,8 @@ messageQueue.registerRequest(
           documentVersion = editInfo.documentVersion
         }
         if (
-          // eslint-disable-next-line
-          editInfo.ruleId === ruleId! &&
+          ruleId != null &&
+          editInfo.ruleId === ruleId &&
           !Fixes.overlaps(getLastEdit(same), editInfo)
         ) {
           same.push(editInfo)
@@ -1318,9 +1315,8 @@ messageQueue.registerRequest(
         commands.set(CommandIds.applySameFixes, sameFixes)
         result.push(
           Command.create(
-            // eslint-disable-next-line
-            `Fix all ${ruleId!} problems`,
-            CommandIds.applySameFixes
+                        `Fix all ${ruleId as string} problems`,
+                        CommandIds.applySameFixes
           )
         )
       }

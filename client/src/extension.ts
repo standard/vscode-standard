@@ -218,18 +218,16 @@ function shouldBeValidated (textDocument: TextDocument): boolean {
 }
 
 export async function activate (context: ExtensionContext): Promise<void> {
-  let activated: boolean
-  // eslint-disable-next-line
-  let openListener: Disposable
-  // eslint-disable-next-line
-  let configurationListener: Disposable
+  let activated: boolean = false
+  let openListener: Disposable = null
+  let configurationListener: Disposable = null
   function didOpenTextDocument (textDocument: TextDocument): void {
     if (activated) {
       return
     }
     if (shouldBeValidated(textDocument)) {
-      openListener.dispose()
-      configurationListener.dispose()
+      openListener?.dispose()
+      configurationListener?.dispose()
       activated = true
       realActivate(context)
     }
@@ -238,8 +236,8 @@ export async function activate (context: ExtensionContext): Promise<void> {
     if (!activated) {
       for (const textDocument of Workspace.textDocuments) {
         if (shouldBeValidated(textDocument)) {
-          openListener.dispose()
-          configurationListener.dispose()
+          openListener?.dispose()
+          configurationListener?.dispose()
           activated = true
           realActivate(context)
           break
@@ -341,8 +339,7 @@ export function realActivate (context: ExtensionContext): void {
     }
   }
 
-  // eslint-disable-next-line
-  let defaultErrorHandler: ErrorHandler
+  let defaultErrorHandler: ErrorHandler = null
   let serverCalledProcessExit: boolean = false
 
   const packageJsonFilter: DocumentFilter = {
@@ -412,13 +409,13 @@ export function realActivate (context: ExtensionContext): void {
     },
     errorHandler: {
       error: (error, message, count): ErrorAction => {
-        return defaultErrorHandler.error(error, message, count)
+        return defaultErrorHandler?.error(error, message, count)
       },
       closed: (): CloseAction => {
         if (serverCalledProcessExit) {
           return CloseAction.DoNotRestart
         }
-        return defaultErrorHandler.closed()
+        return defaultErrorHandler?.closed()
       }
     },
     middleware: {
@@ -629,17 +626,16 @@ export function realActivate (context: ExtensionContext): void {
         updateStatus(params.state)
       })
 
-      // eslint-disable-next-line
-      client.onNotification(exitCalled, async params => {
+      client.onNotification(exitCalled, (async params => {
         serverCalledProcessExit = true
         client.error(
-          `Server process exited with code ${params[0]}. This usually indicates a misconfigured ${linterName} setup.`,
+          `Server process exited with code ${params[0] as string}. This usually indicates a misconfigured ${linterName} setup.`,
           params[1]
         )
         await Window.showErrorMessage(
           `${linterName} server shut down itself. See '${linterName}' output channel for details.`
         )
-      })
+      }) as unknown as () => void)
 
       client.onRequest(NoStandardLibraryRequest.type, async params => {
         const key = 'noStandardMessageShown'
