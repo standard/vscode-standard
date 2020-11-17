@@ -628,9 +628,9 @@ const messageQueue: BufferedMessageQueue = new BufferedMessageQueue(connection)
 
 messageQueue.onNotification(
   ValidateNotification.type,
-  (async (document: TextDocument) => {
+  ((async (document: TextDocument) => {
     await validateSingle(document, true)
-  }) as unknown as () => void,
+  }) as unknown) as () => void,
   (document): number => {
     return document.version
   }
@@ -773,7 +773,7 @@ connection.onInitialize(_params => {
   }
 })
 
-connection.onInitialized((async () => {
+connection.onInitialized(((async () => {
   await connection.client.register(
     DidChangeConfigurationNotification.type,
     undefined
@@ -782,7 +782,7 @@ connection.onInitialized((async () => {
     DidChangeWorkspaceFoldersNotification.type,
     undefined
   )
-}) as unknown as () => void)
+}) as unknown) as () => void)
 
 messageQueue.registerNotification(
   DidChangeConfigurationNotification.type,
@@ -878,7 +878,7 @@ function validate (
     settings.options
   )
   const content = document.getText()
-  const file = getFilePath(uri)
+  let file = getFilePath(uri)
   const cwd = process.cwd()
   try {
     if (file != null) {
@@ -913,6 +913,10 @@ function validate (
         configKey: settings.engine
       }
     }
+
+    // Detect brackets in filename.
+    file = file.replace(']', '[]]').replace('/[', '/[[]')
+
     async.waterfall(
       [
         function (next: (err?: any) => void) {
@@ -1315,8 +1319,8 @@ messageQueue.registerRequest(
         commands.set(CommandIds.applySameFixes, sameFixes)
         result.push(
           Command.create(
-                        `Fix all ${ruleId as string} problems`,
-                        CommandIds.applySameFixes
+            `Fix all ${ruleId as string} problems`,
+            CommandIds.applySameFixes
           )
         )
       }
