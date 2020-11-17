@@ -1,31 +1,32 @@
+// For more information see: https://go.microsoft.com/fwlink/?linkid=830387
 {
-        "version": "0.2.0",
-        "configurations": [
-            {
-                "type": "extensionHost",
-                "request": "launch",
-                "name": "Launch Extension",
-                "runtimeExecutable": "${execPath}",
-                "args": [
-                    "--extensionDevelopmentPath=${workspaceRoot}"
-                ],
-                "stopOnEntry": false,
-                "sourceMaps": true,
-                "outFiles": [
-                    "${workspaceRoot}/client/out/**/*.js"
-                ]
-            },
-            {
-                "type": "node",
-                "request": "attach",
-                "name": "Attach to Server",
-                "address": "localhost",
-                "protocol": "inspector",
-                "port": 6023,
-                "sourceMaps": true,
-                "outFiles": [
-                    "${workspaceRoot}/server/**/*.js"
-                ]
-            }
-        ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "extensionHost",
+      "request": "launch",
+      "name": "Launch Client",
+      "runtimeExecutable": "${execPath}",
+      "args": ["--extensionDevelopmentPath=${workspaceRoot}"],
+      "outFiles": ["${workspaceRoot}/client/out/**/*.js"],
+      "preLaunchTask": {
+        "type": "npm",
+        "script": "watch"
+      }
+    },
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to Server",
+      "port": 6009,
+      "restart": true,
+      "outFiles": ["${workspaceRoot}/server/out/**/*.js"]
     }
+  ],
+  "compounds": [
+    {
+      "name": "Client + Server",
+      "configurations": ["Launch Client", "Attach to Server"]
+    }
+  ]
+}
