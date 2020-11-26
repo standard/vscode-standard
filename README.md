@@ -1,12 +1,17 @@
-# vscode-standardjs
+<h1 align="center">vscode-standardjs</h1>
 
-VSCode extension to integrate [JavaScript Standard Style](https://github.com/standard/standard) into VSCode.
+<p align="center">
+  <strong><a href="https://code.visualstudio.com/">Visual Studio Code</a> extension for <a href="https://standardjs.com">JavaScript Standard Style</a> with automatic fixing.</strong>
+</p>
 
-We support [JavaScript Semi-Standard Style](https://github.com/standard/semistandard) too, if you prefer keeping the semicolon.
-
-[JavaScript Standard Style with custom tweaks](https://github.com/standard/standardx) is also supported if you want to fine-tune your ESLint config while keeping the power of Standard.
-
-This plugin also works with [TypeScript Standard Style](https://github.com/standard/ts-standard) which has additonal rules for TypeScript based projects.
+<p align="center">
+   <a href="https://www.npmjs.com/package/ts-standard"><img alt="TypeScript Standard Style" src="https://camo.githubusercontent.com/f87caadb70f384c0361ec72ccf07714ef69a5c0a/68747470733a2f2f62616467656e2e6e65742f62616467652f636f64652532307374796c652f74732d7374616e646172642f626c75653f69636f6e3d74797065736372697074"/></a>
+   <a href="https://travis-ci.org/github/standard/vscode-standardjs"><img src="https://img.shields.io/travis/standard/vscode-standardjs/master.svg" alt="Travis CI" /></a>
+   <a href="https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs"><img src="https://vsmarketplacebadge.apphb.com/version/chenxsan.vscode-standardjs.svg" alt="Visual Studio Marketplace" /></a>
+   <img alt="Downloads Visual Studio Marketplace" src="https://vsmarketplacebadge.apphb.com/downloads-short/chenxsan.vscode-standardjs.svg" />
+   <br/> <br/>
+   <a href="https://standardjs.com"><img src="https://cdn.rawgit.com/standard/standard/master/sticker.svg" alt="Standard - JavaScript Style Guide" width="200"></a>
+</p>
 
 ## How to use
 
@@ -26,7 +31,7 @@ This plugin also works with [TypeScript Standard Style](https://github.com/stand
 
 ## Plugin options
 
-We give you some options to customize vscode-standardjs in your VSCode [`settings.json`](https://code.visualstudio.com/docs/customization/userandworkspace).
+We give you some options to customize vscode-standardjs in your VSCode [`settings.json`](https://code.visualstudio.com/docs/getstarted/settings).
 
 | Option                        | Description                                                                                                                                                                                                  | Default                                                             |
 | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
@@ -127,3 +132,7 @@ When you open the Command Palette in VSCode (⇧⌘P or Ctrl+Shift+P), this plug
 1. Run `npm install`
 2. Run `npm run package` to build a .vsix file
 3. You can install it with `code --install-extension vscode-standardjs.vsix`
+
+## License
+
+[MIT](./LICENSE)

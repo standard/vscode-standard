@@ -1,5 +1,15 @@
 # Change Log
 
+## 1.4.0
+
+- **Feature**: Add support for `ts-standard` ([#103](https://github.com/standard/vscode-standardjs/pull/103))
+
+## 1.3.0
+
+- **Feature**: Add support for `standardx`, and potentially more standard-engine based linters ([#71](https://github.com/standard/vscode-standardjs/pull/71))
+- **Feature**: Add context standardEnabled ([#106](https://github.com/standard/vscode-standardjs/pull/106))
+- **Fix**: Enable typescript by default ([#96](https://github.com/standard/vscode-standardjs/pull/96))
+
 ## 1.2.0
 
 1. Add a new `usePackageJson` option to enable locally installed standard only.
