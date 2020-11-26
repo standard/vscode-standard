@@ -115,12 +115,14 @@ interface CLIOptions {
   plugins: string[]
   envs: string[]
   parser: string
+  filename: string
 }
 
 type StandardModuleCallback = (error: Object, results: StanardReport) => void
 interface Opts {
   ignore?: string[]
   cwd?: string
+  filename?: string
 }
 interface StandardModule {
   lintText: (
@@ -902,6 +904,7 @@ function validate (
       }
     }
     if (settings.library != null) {
+      newOptions.filename = file
       var opts = settings.library.parseOpts(newOptions)
       var deglobOpts = {
         ignore: opts.ignore,
