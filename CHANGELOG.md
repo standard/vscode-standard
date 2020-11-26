@@ -1,5 +1,9 @@
 # Change Log
 
+## 1.4.1 - Pending
+
+- **Fix**: Detect brackets in filename ([#126](https://github.com/standard/vscode-standardjs/pull/126) and [#139](https://github.com/standard/vscode-standardjs/pull/139))
+
 ## 1.4.0
 
 - **Feature**: Add support for `ts-standard` ([#103](https://github.com/standard/vscode-standardjs/pull/103))
