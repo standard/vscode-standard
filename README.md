@@ -10,7 +10,7 @@
    <a href="https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs"><img src="https://vsmarketplacebadge.apphb.com/version/chenxsan.vscode-standardjs.svg" alt="Visual Studio Marketplace" /></a>
    <img alt="Downloads Visual Studio Marketplace" src="https://vsmarketplacebadge.apphb.com/downloads-short/chenxsan.vscode-standardjs.svg" />
    <br/> <br/>
-   <a href="https://standardjs.com"><img src="https://cdn.rawgit.com/standard/standard/master/sticker.svg" alt="Standard - JavaScript Style Guide" width="200"></a>
+   <a href="https://standardjs.com"><img src="https://raw.githubusercontent.com/standard/vscode-standardjs/master/standard_icon.png" alt="Standard - JavaScript Style Guide" width="200"></a>
 </p>
 
 ## How to use
