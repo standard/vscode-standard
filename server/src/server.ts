@@ -886,13 +886,7 @@ function validate (
         ) {
           process.chdir(settings.workingDirectory.directory)
         }
-      } else if (settings.workspaceFolder != null) {
-        const workspaceFolderUri = settings.workspaceFolder.uri
-        if (workspaceFolderUri.scheme === 'file') {
-          newOptions.cwd = workspaceFolderUri.fsPath
-          process.chdir(workspaceFolderUri.fsPath)
-        }
-      } else if (settings.workspaceFolder == null && !isUNC(file)) {
+      } else if (!isUNC(file)) {
         const directory = path.dirname(file)
         if (directory.length > 0) {
           if (path.isAbsolute(directory)) {
