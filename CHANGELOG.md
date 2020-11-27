@@ -3,6 +3,7 @@
 ## 1.4.1 - Pending
 
 - **Fix**: Detect brackets in filename ([#126](https://github.com/standard/vscode-standardjs/pull/126) and [#139](https://github.com/standard/vscode-standardjs/pull/139))
+- **Fix**: Use standard cwd option from package.json closest to the linted file ([#140](https://github.com/standard/vscode-standardjs/pull/140))
 
 ## 1.4.0
 
