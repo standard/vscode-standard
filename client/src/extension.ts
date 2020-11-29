@@ -62,6 +62,7 @@ interface TextDocumentSettings {
   workspaceFolder: VWorkspaceFolder | undefined
   workingDirectory: DirectoryItem.DirectoryItem | undefined
   library: undefined
+  treatErrorsAsWarnings: boolean
 }
 
 interface NoStandardState {
@@ -499,7 +500,8 @@ export function realActivate (context: ExtensionContext): void {
               nodePath: config.get('nodePath', undefined),
               workingDirectory: undefined,
               workspaceFolder: undefined,
-              library: undefined
+              library: undefined,
+              treatErrorsAsWarnings: config.get('treatErrorsAsWarnings', false)
             }
             const document: TextDocument = syncedDocuments.get(item.scopeUri)
             if (document == null) {
