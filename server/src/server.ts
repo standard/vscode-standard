@@ -115,12 +115,14 @@ interface CLIOptions {
   plugins: string[]
   envs: string[]
   parser: string
+  filename: string
 }
 
 type StandardModuleCallback = (error: Object, results: StanardReport) => void
 interface Opts {
   ignore?: string[]
   cwd?: string
+  filename?: string
 }
 interface StandardModule {
   lintText: (
@@ -886,7 +888,13 @@ function validate (
         ) {
           process.chdir(settings.workingDirectory.directory)
         }
-      } else if (!isUNC(file)) {
+      } else if (settings.workspaceFolder != null && settings.engine !== 'standard') {
+        const workspaceFolderUri = settings.workspaceFolder.uri
+        if (workspaceFolderUri.scheme === 'file') {
+          newOptions.cwd = workspaceFolderUri.fsPath
+          process.chdir(workspaceFolderUri.fsPath)
+        }
+      } else if (settings.workspaceFolder == null && !isUNC(file)) {
         const directory = path.dirname(file)
         if (directory.length > 0) {
           if (path.isAbsolute(directory)) {
@@ -896,6 +904,7 @@ function validate (
       }
     }
     if (settings.library != null) {
+      newOptions.filename = file
       var opts = settings.library.parseOpts(newOptions)
       var deglobOpts = {
         ignore: opts.ignore,
