@@ -9,5 +9,5 @@ install:
   - 'npm install'
 
 script:
-  - 'npm run compile'
+  - 'npm run package'
   - 'npm run lint'
