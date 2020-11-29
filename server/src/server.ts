@@ -75,6 +75,7 @@ interface TextDocumentSettings {
   workspaceFolder: { name: string, uri: URI } | undefined
   workingDirectory: DirectoryItem.DirectoryItem | undefined
   library: StandardModule | undefined
+  treatErrorsAsWarnings: boolean
 }
 
 interface StandardAutoFixEdit {
@@ -133,7 +134,7 @@ interface StandardModule {
 
 function makeDiagnostic (
   problem: StandardProblem,
-  source: LinterValues
+  settings: TextDocumentSettings
 ): Diagnostic {
   const message =
     problem.ruleId != null
@@ -147,8 +148,8 @@ function makeDiagnostic (
     problem.endColumn != null ? Math.max(0, problem.endColumn - 1) : startChar
   return {
     message: message,
-    severity: convertSeverity(problem.severity),
-    source: source,
+    severity: settings.treatErrorsAsWarnings ? DiagnosticSeverity.Warning : convertSeverity(problem.severity),
+    source: settings.engine,
     range: {
       start: { line: startLine, character: startChar },
       end: { line: endLine, character: endChar }
@@ -959,7 +960,7 @@ function validate (
             ) {
               docReport.messages.forEach(problem => {
                 if (problem != null) {
-                  const diagnostic = makeDiagnostic(problem, settings.engine)
+                  const diagnostic = makeDiagnostic(problem, settings)
                   diagnostics.push(diagnostic)
                   if (settings.autoFix) {
                     recordCodeAction(document, diagnostic, problem)

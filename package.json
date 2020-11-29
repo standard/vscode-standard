@@ -162,6 +162,11 @@
           "type": "boolean",
           "default": false,
           "description": "Activate JavaScript Standard Style based on project's package.json settings, use globally installed standard module if set to \"false\""
+        },
+        "standard.treatErrorsAsWarnings": {
+          "type": "boolean",
+          "default": false,
+          "description": "Any linting error reported by Standard will instead be displayed as a warning within VS Code."
         }
       }
     },
