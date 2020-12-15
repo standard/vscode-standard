@@ -28,7 +28,7 @@
     "format": "ts-standard --fix | snazzy"
   },
   "devDependencies": {
-    "vscode-languageclient": "^6.1.3",
+    "vscode-languageclient": "^7.0.0",
     "vscode-nls": "^5.0.0"
   },
   "dependencies": {
