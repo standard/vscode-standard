@@ -10,4 +10,4 @@ export interface StatusParams {
   state: Status
 }
 
-export const type = new NotificationType<StatusParams, void>('standard/status')
+export const type = new NotificationType<StatusParams>('standard/status')

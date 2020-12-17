@@ -5,6 +5,6 @@ interface NoConfigParams {
   document: TextDocumentIdentifier
 }
 
-export const type = new RequestType<NoConfigParams, {}, void, void>(
+export const type = new RequestType<NoConfigParams, {}, void>(
   'standard/noConfig'
 )
