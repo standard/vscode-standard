@@ -31,7 +31,7 @@ import {
   State as ClientState,
   TransportKind,
   VersionedTextDocumentIdentifier
-} from 'vscode-languageclient'
+} from 'vscode-languageclient/node'
 import { URI } from 'vscode-uri'
 
 import * as DirectoryItem from './utils/DirectoryItem'
@@ -70,7 +70,7 @@ interface NoStandardState {
   workspaces?: { [key: string]: boolean }
 }
 
-const exitCalled = new NotificationType<[number, string], void>(
+const exitCalled = new NotificationType<[number, string]>(
   'standard/exitCalled'
 )
 
@@ -90,7 +90,7 @@ function getLinterName (): LinterNameValues {
 function pickFolder (
   folders: VWorkspaceFolder[],
   placeHolder: string
-): Thenable<VWorkspaceFolder> {
+): Thenable<VWorkspaceFolder | undefined> {
   if (folders.length === 1) {
     return Promise.resolve(folders[0])
   }
@@ -184,7 +184,7 @@ async function disable (): Promise<void> {
   )
 }
 
-let dummyCommands: Disposable[]
+let dummyCommands: Disposable[] | null
 
 const defaultLanguages = [
   'javascript',
@@ -216,8 +216,8 @@ function shouldBeValidated (textDocument: TextDocument): boolean {
 
 export async function activate (context: ExtensionContext): Promise<void> {
   let activated: boolean = false
-  let openListener: Disposable = null
-  let configurationListener: Disposable = null
+  let openListener: Disposable | null = null
+  let configurationListener: Disposable | null = null
   function didOpenTextDocument (textDocument: TextDocument): void {
     if (activated) {
       return
@@ -248,7 +248,7 @@ export async function activate (context: ExtensionContext): Promise<void> {
     configurationChanged
   )
 
-  const notValidating = async (): Promise<Thenable<string>> => {
+  const notValidating = async (): Promise<Thenable<string | undefined>> => {
     return await Window.showInformationMessage(
       `${linterName} is not validating any files yet.`
     )
@@ -299,7 +299,7 @@ export function realActivate (context: ExtensionContext): void {
     updateStatusBarVisibility(Window.activeTextEditor)
   }
 
-  function updateStatusBarVisibility (editor: TextEditor): void {
+  function updateStatusBarVisibility (editor: TextEditor | undefined): void {
     statusBarItem.text =
       standardStatus === StatusNotification.Status.ok
         ? linterName
@@ -336,7 +336,7 @@ export function realActivate (context: ExtensionContext): void {
     }
   }
 
-  let defaultErrorHandler: ErrorHandler = null
+  let defaultErrorHandler: ErrorHandler | null = null
   let serverCalledProcessExit: boolean = false
 
   const packageJsonFilter: DocumentFilter = {
@@ -406,13 +406,13 @@ export function realActivate (context: ExtensionContext): void {
     },
     errorHandler: {
       error: (error, message, count): ErrorAction => {
-        return defaultErrorHandler?.error(error, message, count)
+        return defaultErrorHandler?.error(error, message, count) as ErrorAction
       },
       closed: (): CloseAction => {
         if (serverCalledProcessExit) {
           return CloseAction.DoNotRestart
         }
-        return defaultErrorHandler?.closed()
+        return defaultErrorHandler?.closed() as CloseAction
       }
     },
     middleware: {
@@ -477,17 +477,17 @@ export function realActivate (context: ExtensionContext): void {
         return next(document, range, newContext, token)
       },
       workspace: {
-        configuration: (params, _token, _next): any[] => {
+        configuration: (params, _token, _next) => {
           if (params.items == null) {
-            return null
+            return []
           }
           const result: Array<TextDocumentSettings | null> = []
           for (const item of params.items) {
-            if (item.section.length > 0 || item.scopeUri.length === 0) {
+            if ((item?.section != null && item.section.length > 0) || item.scopeUri?.length === 0) {
               result.push(null)
               continue
             }
-            const resource = client.protocol2CodeConverter.asUri(item.scopeUri)
+            const resource = client.protocol2CodeConverter.asUri(item.scopeUri as string)
             const config = Workspace.getConfiguration('standard', resource)
             const settings: TextDocumentSettings = {
               validate: false,
@@ -503,7 +503,7 @@ export function realActivate (context: ExtensionContext): void {
               library: undefined,
               treatErrorsAsWarnings: config.get('treatErrorsAsWarnings', false)
             }
-            const document: TextDocument = syncedDocuments.get(item.scopeUri)
+            const document = syncedDocuments.get(item.scopeUri as string)
             if (document == null) {
               result.push(settings)
               continue
@@ -524,7 +524,7 @@ export function realActivate (context: ExtensionContext): void {
                   item.language === document.languageId
                 ) {
                   settings.validate = true
-                  settings.autoFix = item.autoFix
+                  settings.autoFix = item.autoFix ?? false
                   break
                 }
               }
@@ -543,7 +543,7 @@ export function realActivate (context: ExtensionContext): void {
             }
             const workingDirectories = config.get<
             Array<string | DirectoryItem.DirectoryItem>
-            >('workingDirectories', undefined)
+            >('workingDirectories')
             if (Array.isArray(workingDirectories)) {
               let workingDirectory
               const workspaceFolderPath =
@@ -557,7 +557,7 @@ export function realActivate (context: ExtensionContext): void {
                   directory = entry
                 } else if (DirectoryItem.is(entry)) {
                   directory = entry.directory
-                  changeProcessCWD = !!entry.changeProcessCWD
+                  changeProcessCWD = entry.changeProcessCWD != null ? changeProcessCWD : false
                 }
                 if (directory != null) {
                   if (
@@ -624,7 +624,7 @@ export function realActivate (context: ExtensionContext): void {
         updateStatus(params.state)
       })
 
-      client.onNotification(exitCalled, (async params => {
+      client.onNotification(exitCalled, (async (params: any) => {
         serverCalledProcessExit = true
         client.error(
           `Server process exited with code ${params[0] as string}. This usually indicates a misconfigured ${linterName} setup.`,
@@ -657,7 +657,7 @@ export function realActivate (context: ExtensionContext): void {
           if (state.workspaces == null) {
             state.workspaces = Object.create(null)
           }
-          if (!state.workspaces[workspaceFolder.uri.toString()]) {
+          if (state.workspaces != null && !state.workspaces[workspaceFolder.uri.toString()]) {
             state.workspaces[workspaceFolder.uri.toString()] = true
             client.outputChannel.show(true)
             await context.globalState.update(key, state)
@@ -670,7 +670,7 @@ export function realActivate (context: ExtensionContext): void {
               `You need to reopen VS Code after installing ${linter}.`
             ].join('\n')
           )
-          if (!state.global) {
+          if (state.global != null && !state.global) {
             state.global = true
             client.outputChannel.show(true)
             await context.globalState.update(key, state)
@@ -683,7 +683,7 @@ export function realActivate (context: ExtensionContext): void {
 
   if (dummyCommands != null) {
     dummyCommands.forEach(command => command.dispose())
-    dummyCommands = undefined
+    dummyCommands = null
   }
   context.subscriptions.push(
     client.start(),

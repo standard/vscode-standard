@@ -4,6 +4,6 @@ interface NoStandardLibraryParams {
   source: TextDocumentIdentifier
 }
 
-export const type = new RequestType<NoStandardLibraryParams, {}, void, void>(
+export const type = new RequestType<NoStandardLibraryParams, {}, void>(
   'standard/noLibrary'
 )

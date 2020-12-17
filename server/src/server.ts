@@ -14,7 +14,7 @@ import {
   ErrorCodes,
   ExecuteCommandRequest,
   Files,
-  IConnection,
+  Connection,
   IPCMessageReader,
   IPCMessageWriter,
   NotificationHandler,
@@ -29,7 +29,7 @@ import {
   TextDocumentSyncKind,
   TextEdit,
   VersionedTextDocumentIdentifier
-} from 'vscode-languageserver'
+} from 'vscode-languageserver/node'
 import {
   CancellationToken,
   WorkspaceChange
@@ -276,7 +276,7 @@ function getFilePath (documentOrUri: string | URI): string {
   return uri.fsPath
 }
 
-const exitCalled = new NotificationType<[number, string], void>(
+const exitCalled = new NotificationType<[number, string]>(
   'standard/exitCalled'
 )
 
@@ -476,14 +476,14 @@ class BufferedMessageQueue {
 
   private timer: NodeJS.Immediate | undefined
 
-  constructor (private readonly connection: IConnection) {
+  constructor (private readonly connection: Connection) {
     this.queue = []
     this.requestHandlers = new Map()
     this.notificationHandlers = new Map()
   }
 
-  public registerRequest<P, R, E, RO> (
-    type: RequestType<P, R, E, RO>,
+  public registerRequest<P, R, RO> (
+    type: RequestType<P, R, RO>,
     handler: RequestHandler<any, any, any>,
     versionProvider?: VersionProvider<P>
   ): void {
@@ -504,7 +504,7 @@ class BufferedMessageQueue {
     this.requestHandlers.set(type.method, { handler, versionProvider })
   }
 
-  public registerNotification<P, RO> (
+  public registerNotification (
     type: any,
     handler: NotificationHandler<any>,
     versionProvider?: any
@@ -521,8 +521,8 @@ class BufferedMessageQueue {
     this.notificationHandlers.set(type.method, { handler, versionProvider })
   }
 
-  public addNotificationMessage<P, RO> (
-    type: NotificationType<P, RO>,
+  public addNotificationMessage<P> (
+    type: NotificationType<P>,
     params: P,
     version: number
   ): void {
@@ -534,8 +534,8 @@ class BufferedMessageQueue {
     this.trigger()
   }
 
-  public onNotification<P, RO> (
-    type: NotificationType<P, RO>,
+  public onNotification<P> (
+    type: NotificationType<P>,
     handler: NotificationHandler<P>,
     versionProvider?: (params: P) => number
   ): void {
@@ -565,7 +565,7 @@ class BufferedMessageQueue {
       ) {
         requestMessage.reject(
           new ResponseError(
-            ErrorCodes.RequestCancelled,
+            ErrorCodes.InvalidRequest,
             'Request got cancelled'
           )
         )
@@ -583,7 +583,7 @@ class BufferedMessageQueue {
       ) {
         requestMessage.reject(
           new ResponseError(
-            ErrorCodes.RequestCancelled,
+            ErrorCodes.InvalidRequest,
             'Request got cancelled'
           )
         )
