@@ -35,6 +35,6 @@
     "@types/vscode": "^1.52.0",
     "snazzy": "file:../node_modules/snazzy",
     "ts-standard": "file:../node_modules/ts-standard",
-    "vscode-uri": "^3.0.1"
+    "vscode-uri": "^3.0.2"
   }
 }
