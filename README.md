@@ -5,12 +5,12 @@
 </p>
 
 <p align="center">
-   <a href="https://www.npmjs.com/package/ts-standard"><img alt="TypeScript Standard Style" src="https://camo.githubusercontent.com/f87caadb70f384c0361ec72ccf07714ef69a5c0a/68747470733a2f2f62616467656e2e6e65742f62616467652f636f64652532307374796c652f74732d7374616e646172642f626c75653f69636f6e3d74797065736372697074"/></a>
-   <a href="https://travis-ci.org/github/standard/vscode-standardjs"><img src="https://img.shields.io/travis/standard/vscode-standardjs/master.svg" alt="Travis CI" /></a>
-   <a href="https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs"><img src="https://vsmarketplacebadge.apphb.com/version/chenxsan.vscode-standardjs.svg" alt="Visual Studio Marketplace" /></a>
-   <img alt="Downloads Visual Studio Marketplace" src="https://vsmarketplacebadge.apphb.com/downloads-short/chenxsan.vscode-standardjs.svg" />
-   <br/> <br/>
-   <a href="https://standardjs.com"><img src="https://raw.githubusercontent.com/standard/vscode-standardjs/master/standard_icon.png" alt="Standard - JavaScript Style Guide" width="200"></a>
+  <a href="https://github.com/standard/vscode-standardjs/actions?query=workflow%3A%22Node.js+CI%22"><img src="https://github.com/standard/vscode-standardjs/workflows/Node.js%20CI/badge.svg" alt="Node.js CI" /></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs"><img src="https://vsmarketplacebadge.apphb.com/version/chenxsan.vscode-standardjs.svg" alt="Visual Studio Marketplace" /></a>
+  <img alt="Downloads Visual Studio Marketplace" src="https://vsmarketplacebadge.apphb.com/downloads-short/chenxsan.vscode-standardjs.svg" />
+  <a href="https://www.npmjs.com/package/ts-standard"><img alt="TypeScript Standard Style" src="https://camo.githubusercontent.com/f87caadb70f384c0361ec72ccf07714ef69a5c0a/68747470733a2f2f62616467656e2e6e65742f62616467652f636f64652532307374796c652f74732d7374616e646172642f626c75653f69636f6e3d74797065736372697074"/></a>
+  <br/> <br/>
+  <a href="https://standardjs.com"><img src="https://raw.githubusercontent.com/standard/vscode-standardjs/master/standard_icon.png" alt="Standard - JavaScript Style Guide" width="200"></a>
 </p>
 
 ## How to use
@@ -51,13 +51,13 @@ You can still configure `standard` itself with the `standard.options` setting, f
 
 ```json
 "standard.options": {
-	"globals": ["$", "jQuery", "fetch"],
-	"ignore": [
-		"node_modules/**"
-	],
-	"plugins": ["html"],
-	"parser": "babel-eslint",
-	"envs": ["jest"]
+ "globals": ["$", "jQuery", "fetch"],
+ "ignore": [
+  "node_modules/**"
+ ],
+ "plugins": ["html"],
+ "parser": "babel-eslint",
+ "envs": ["jest"]
 }
 ```
 
@@ -65,8 +65,8 @@ It's recommended to change these options in your `package.json` file on a per-pr
 
 ```json
 "standard": {
-	"plugins": ["html"],
-	"parser": "babel-eslint"
+ "plugins": ["html"],
+ "parser": "babel-eslint"
 }
 ```
 
@@ -91,15 +91,15 @@ When you open the Command Palette in VSCode (⇧⌘P or Ctrl+Shift+P), this plug
 
    ```json
    "standard.validate": [
-   	"javascript",
-   	"javascriptreact",
-   	"html"
+    "javascript",
+    "javascriptreact",
+    "html"
    ],
    "standard.options": {
-   	"plugins": ["html"]
+    "plugins": ["html"]
    },
    "files.associations": {
-   	"*.vue": "html"
+    "*.vue": "html"
    },
    ```
 
@@ -107,15 +107,15 @@ When you open the Command Palette in VSCode (⇧⌘P or Ctrl+Shift+P), this plug
 
    ```json
    "standard.validate": [
-   	"javascript",
-   	"javascriptreact",
-   	{
-   		"language": "html",
-   		"autoFix": true
-   	}
+    "javascript",
+    "javascriptreact",
+    {
+     "language": "html",
+     "autoFix": true
+    }
    ],
    "standard.options": {
-   	"plugins": ["html"]
+    "plugins": ["html"]
    }
    ```
 
