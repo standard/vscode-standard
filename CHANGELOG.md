@@ -1,10 +1,9 @@
-# Change Log
+# Changelog
 
-## 1.5.0 - Pending
+## 1.5.0
 
-- **Feature**: Add `treatErrorsAsWarnings` to forces all warnings and errors from standard to become warnings
+- **Feature**: Add `treatErrorsAsWarnings` to forces all warnings and errors from standard to become warnings ([#108](https://github.com/standard/vscode-standardjs/pull/108))
 - **Fix**: Detect brackets in filename ([#126](https://github.com/standard/vscode-standardjs/pull/126) and [#139](https://github.com/standard/vscode-standardjs/pull/139))
-- **Fix**: Use `standard` cwd option from package.json closest to the linted file (only if engine is `standard`) ([#140](https://github.com/standard/vscode-standardjs/pull/140))
 
 ## 1.4.0
 

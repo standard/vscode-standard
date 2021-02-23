@@ -889,7 +889,7 @@ function validate (
         ) {
           process.chdir(settings.workingDirectory.directory)
         }
-      } else if (settings.workspaceFolder != null && settings.engine !== 'standard') {
+      } else if (settings.workspaceFolder != null) {
         const workspaceFolderUri = settings.workspaceFolder.uri
         if (workspaceFolderUri.scheme === 'file') {
           newOptions.cwd = workspaceFolderUri.fsPath

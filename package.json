@@ -1,8 +1,8 @@
 {
   "name": "vscode-standardjs",
   "displayName": "StandardJS - JavaScript Standard Style",
-  "description": "Integrates JavaScript Standard Style into VS Code.",
-  "version": "1.4.0",
+  "description": "Visual Studio Code extension for JavaScript Standard Style with automatic fixing.",
+  "version": "1.5.0",
   "author": "Sam Chen",
   "license": "MIT",
   "repository": {
