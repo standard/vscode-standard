@@ -1,4 +1,10 @@
-# vscode-standardjs
+# vscode-standardjs (old version)
+
+---
+
+#### ⚠️ **Warning:** This extension version is not actively being maintained. There is a new version published under the `standard` namespace, please install the new version: https://marketplace.visualstudio.com/items?itemName=standard.vscode-standard also available on `open-vsx` registry: https://open-vsx.org/extension/standard/vscode-standard
+
+---
 
 VSCode extension to integrate [JavaScript Standard Style](https://github.com/feross/standard) into VSCode.
 
