@@ -1,14 +1,14 @@
 {
   "name": "server",
   "version": "0.0.1",
-  "author": "Sam Chen",
+  "author": "Standard",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/chenxsan/vscode-standardjs.git"
+    "url": "https://github.com/standard/vscode-standard.git"
   },
   "bugs": {
-    "url": "https://github.com/chenxsan/vscode-standardjs/issues"
+    "url": "https://github.com/standard/vscode-standard/issues"
   },
   "engines": {
     "node": "*"

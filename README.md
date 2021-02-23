@@ -1,16 +1,16 @@
-<h1 align="center">vscode-standardjs</h1>
+<h1 align="center">vscode-standard</h1>
 
 <p align="center">
   <strong><a href="https://code.visualstudio.com/">Visual Studio Code</a> extension for <a href="https://standardjs.com">JavaScript Standard Style</a> with automatic fixing.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/standard/vscode-standardjs/actions?query=workflow%3A%22Node.js+CI%22"><img src="https://github.com/standard/vscode-standardjs/workflows/Node.js%20CI/badge.svg" alt="Node.js CI" /></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=chenxsan.vscode-standardjs"><img src="https://vsmarketplacebadge.apphb.com/version/chenxsan.vscode-standardjs.svg" alt="Visual Studio Marketplace" /></a>
-  <img alt="Downloads Visual Studio Marketplace" src="https://vsmarketplacebadge.apphb.com/downloads-short/chenxsan.vscode-standardjs.svg" />
+  <a href="https://github.com/standard/vscode-standard/actions?query=workflow%3A%22Node.js+CI%22"><img src="https://github.com/standard/vscode-standard/workflows/Node.js%20CI/badge.svg" alt="Node.js CI" /></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=standard.vscode-standard"><img src="https://vsmarketplacebadge.apphb.com/version/standard.vscode-standard.svg" alt="Visual Studio Marketplace" /></a>
+  <img alt="Downloads Visual Studio Marketplace" src="https://vsmarketplacebadge.apphb.com/downloads-short/standard.vscode-standard.svg" />
   <a href="https://www.npmjs.com/package/ts-standard"><img alt="TypeScript Standard Style" src="https://camo.githubusercontent.com/f87caadb70f384c0361ec72ccf07714ef69a5c0a/68747470733a2f2f62616467656e2e6e65742f62616467652f636f64652532307374796c652f74732d7374616e646172642f626c75653f69636f6e3d74797065736372697074"/></a>
   <br/> <br/>
-  <a href="https://standardjs.com"><img src="https://raw.githubusercontent.com/standard/vscode-standardjs/master/standard_icon.png" alt="Standard - JavaScript Style Guide" width="200"></a>
+  <a href="https://standardjs.com"><img src="https://raw.githubusercontent.com/standard/vscode-standard/master/standard_icon.png" alt="Standard - JavaScript Style Guide" width="200"></a>
 </p>
 
 ## How to use
@@ -31,7 +31,7 @@
 
 ## Plugin options
 
-We give you some options to customize vscode-standardjs in your VSCode [`settings.json`](https://code.visualstudio.com/docs/getstarted/settings).
+We give you some options to customize vscode-standard in your VSCode [`settings.json`](https://code.visualstudio.com/docs/getstarted/settings).
 
 | Option                           | Description                                                                                                                                                                                                  | Default                                                             |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
@@ -132,7 +132,7 @@ When you open the Command Palette in VSCode (⇧⌘P or Ctrl+Shift+P), this plug
 
 1. Run `npm install`
 2. Run `npm run package` to build a .vsix file
-3. You can install it with `code --install-extension vscode-standardjs.vsix`
+3. You can install it with `code --install-extension vscode-standard.vsix`
 
 ## License
 
