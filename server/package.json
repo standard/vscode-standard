@@ -29,7 +29,7 @@
     "vscode-uri": "^3.0.2"
   },
   "devDependencies": {
-    "@types/async": "^3.2.5",
+    "@types/async": "^3.2.6",
     "@types/deglob": "^2.1.1",
     "snazzy": "file:../node_modules/snazzy",
     "ts-standard": "file:../node_modules/ts-standard"
