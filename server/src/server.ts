@@ -985,17 +985,15 @@ function validate (
         }
       ],
       function (err: any, _results: any) {
+        if (cwd !== process.cwd()) {
+          process.chdir(cwd)
+        }
         if (err != null) {
           return console.log(err)
         }
       }
     )
-  } catch {
-  } finally {
-    if (cwd !== process.cwd()) {
-      process.chdir(cwd)
-    }
-  }
+  } catch {}
 }
 
 let noConfigReported: Map<string, StandardModule | undefined> = new Map<
