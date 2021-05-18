@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.5.1
+
+- **Fix**: Find babel config files with `@babel/eslint-parser` ([#207](https://github.com/standard/vscode-standardjs/pull/207))
+
 ## 1.5.0
 
 - **Feature**: Add `treatErrorsAsWarnings` to forces all warnings and errors from standard to become warnings ([#108](https://github.com/standard/vscode-standard/pull/108))
