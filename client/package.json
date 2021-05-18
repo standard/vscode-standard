@@ -13,7 +13,7 @@
 		"url": "https://github.com/chenxsan/vscode-standardjs/issues"
 	},
 	"engines": {
-		"vscode": "^1.16.0"
+		"vscode": "^1.35.0"
 	},
 	"scripts": {
 		"update-vscode": "node ./node_modules/vscode/bin/install",

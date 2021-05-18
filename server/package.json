@@ -19,7 +19,7 @@
 		"vscode-uri": "^1.0.1"
 	},
 	"devDependencies": {
-		"@types/node": "^6.0.87",
+		"@types/node": "^8.10.66",
 		"typescript": "^2.4.2"
 	},
 	"scripts": {
