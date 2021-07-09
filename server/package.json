@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@types/async": "^3.2.7",
-    "@types/deglob": "^2.1.1",
+    "@types/deglob": "^2.1.2",
     "snazzy": "file:../node_modules/snazzy",
     "ts-standard": "file:../node_modules/ts-standard"
   },
