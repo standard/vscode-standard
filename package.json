@@ -26,7 +26,8 @@
     "vue"
   ],
   "engines": {
-    "vscode": "^1.50.0"
+    "vscode": "^1.50.0",
+    "npm": ">=7.0.0"
   },
   "activationEvents": [
     "*"
