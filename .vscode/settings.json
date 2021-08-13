@@ -1,0 +1,6 @@
+{
+  "standard.enable": true,
+  "standard.engine": "ts-standard",
+  "standard.usePackageJson": true,
+  "standard.workingDirectories": ["client", "server"]
+}
