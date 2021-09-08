@@ -210,7 +210,7 @@
     "format": "cd client && npm run format && cd ../server && npm run format && cd .."
   },
   "devDependencies": {
-    "@types/node": "^16.7.10",
+    "@types/node": "^16.7.13",
     "snazzy": "^9.0.0",
     "ts-standard": "^10.0.0",
     "typescript": "^4.4.2",
