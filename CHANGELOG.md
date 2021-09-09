@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0
+
+- **Feature**: Better options default to reduce configurations overhead for users so that they can use the extension fast without too much configurations and still following "best practices" by encouraging local installation per project. ([#263](https://github.com/standard/vscode-standard/pull/263))
+
+Now the extension will be automatically be enabled in projects that has one of the engines (`standard`, `semistandard`, `standardx` or `ts-standard`) installed in `devDependencies` in `package.json`.
+
+**Note**: This feature is only working if you have only **one** open folder in your VSCode workspace.
+**Note 2**: If you still want to enable the extension globally you can set the new option : `"standard.enableGlobally": true` (by default it is set to `false`).
+
+**BREAKING CHANGE**: This feature changed the default settings, before: `"standard.usePackageJson": false`, after: `"standard.usePackageJson": true`
+**BREAKING CHANGE**: By default (if you don't set `"standard.enableGlobally": true`), the extension will not lint your files if you haven't got a `package.json` containing one of the engines installed in `devDependencies`.
+
 ## 1.5.1
 
 - **Fix**: Find babel config files with `@babel/eslint-parser` ([#207](https://github.com/standard/vscode-standardjs/pull/207))

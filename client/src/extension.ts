@@ -1,4 +1,5 @@
 import * as path from 'path'
+import * as fs from 'fs'
 import {
   CodeActionContext,
   commands as Commands,
@@ -12,6 +13,7 @@ import {
   TextEditor,
   window as Window,
   workspace as Workspace,
+  WorkspaceConfiguration,
   WorkspaceFolder as VWorkspaceFolder
 } from 'vscode'
 import {
@@ -40,13 +42,20 @@ import * as NoStandardLibraryRequest from './utils/NoStandardLibraryRequest'
 import * as StatusNotification from './utils/StatusNotification'
 import * as ValidateItem from './utils/ValidateItem'
 
-type LinterValues = 'standard' | 'semistandard' | 'standardx' | 'ts-standard'
+const linterValues = [
+  'standard',
+  'semistandard',
+  'standardx',
+  'ts-standard'
+] as const
+
+type LinterValues = typeof linterValues[number]
 type LinterNameValues =
   | 'JavaScript Standard Style'
   | 'JavaScript Semi-Standard Style'
   | 'JavaScript Standard Style with custom tweaks'
   | 'TypeScript Standard Style'
-var linterName: LinterNameValues
+let linterName: LinterNameValues
 
 type RunValues = 'onType' | 'onSave'
 
@@ -70,9 +79,7 @@ interface NoStandardState {
   workspaces?: { [key: string]: boolean }
 }
 
-const exitCalled = new NotificationType<[number, string]>(
-  'standard/exitCalled'
-)
+const exitCalled = new NotificationType<[number, string]>('standard/exitCalled')
 
 interface WorkspaceFolderItem extends QuickPickItem {
   folder: VWorkspaceFolder
@@ -95,7 +102,7 @@ function pickFolder (
     return Promise.resolve(folders[0])
   }
   return Window.showQuickPick(
-    folders.map<WorkspaceFolderItem>(folder => {
+    folders.map<WorkspaceFolderItem>((folder) => {
       return {
         label: folder.name,
         description: folder.uri.fsPath,
@@ -103,7 +110,7 @@ function pickFolder (
       }
     }),
     { placeHolder: placeHolder }
-  ).then(selected => {
+  ).then((selected) => {
     if (selected == null) {
       return undefined
     }
@@ -120,7 +127,7 @@ async function enable (): Promise<void> {
     return undefined
   }
   const disabledFolders = folders.filter(
-    folder =>
+    (folder) =>
       !Workspace.getConfiguration('standard', folder.uri).get('enable', true)
   )
   if (disabledFolders.length === 0) {
@@ -156,7 +163,7 @@ async function disable (): Promise<void> {
     )
     return undefined
   }
-  const enabledFolders = folders.filter(folder =>
+  const enabledFolders = folders.filter((folder) =>
     Workspace.getConfiguration('standard', folder.uri).get('enable', true)
   )
   if (enabledFolders.length === 0) {
@@ -192,11 +199,10 @@ const defaultLanguages = [
   'typescript',
   'typescriptreact'
 ]
-function shouldBeValidated (textDocument: TextDocument): boolean {
-  const config = Workspace.getConfiguration('standard', textDocument.uri)
-  if (!config.get('enable', true)) {
-    return false
-  }
+function shouldBeValidatedLanguage (
+  config: WorkspaceConfiguration,
+  textDocument: TextDocument
+): boolean {
   const validate = config.get<Array<ValidateItem.ValidateItem | string>>(
     'validate',
     defaultLanguages
@@ -210,6 +216,43 @@ function shouldBeValidated (textDocument: TextDocument): boolean {
     ) {
       return true
     }
+  }
+  return false
+}
+
+function shouldBeValidated (textDocument: TextDocument): boolean {
+  const config = Workspace.getConfiguration('standard', textDocument.uri)
+  const usePackageJson = config.get('usePackageJson', true)
+  const isEnabled = config.get('enable', true)
+  const isEnabledGlobally = config.get('enableGlobally', true)
+  if (!isEnabled) {
+    return false
+  }
+  if (
+    !isEnabledGlobally &&
+    usePackageJson &&
+    Workspace.workspaceFolders?.length === 1
+  ) {
+    const workspacePath = Workspace.workspaceFolders[0].uri.fsPath
+    const packageJsonPath = path.join(workspacePath, 'package.json')
+    if (fs.existsSync(packageJsonPath)) {
+      const packageJson = JSON.parse(
+        fs.readFileSync(packageJsonPath).toString()
+      )
+      if (packageJson.devDependencies != null) {
+        const devDependencies = Object.keys(packageJson.devDependencies)
+        const hasStandardEngineInstalled = linterValues.some((engine) => {
+          return devDependencies.includes(engine)
+        })
+        if (hasStandardEngineInstalled) {
+          return shouldBeValidatedLanguage(config, textDocument)
+        }
+        return false
+      }
+    }
+  }
+  if (isEnabledGlobally) {
+    return shouldBeValidatedLanguage(config, textDocument)
   }
   return false
 }
@@ -244,9 +287,8 @@ export async function activate (context: ExtensionContext): Promise<void> {
     await Commands.executeCommand('setContext', 'standardEnabled', activated)
   }
   openListener = Workspace.onDidOpenTextDocument(didOpenTextDocument)
-  configurationListener = Workspace.onDidChangeConfiguration(
-    configurationChanged
-  )
+  configurationListener =
+    Workspace.onDidChangeConfiguration(configurationChanged)
 
   const notValidating = async (): Promise<Thenable<string | undefined>> => {
     return await Window.showInformationMessage(
@@ -396,10 +438,10 @@ export function realActivate (context: ExtensionContext): void {
             ? configuration.get('validate', defaultLanguages)
             : defaultLanguages,
         workspaceFolders:
-          folders != null ? folders.map(folder => folder.name) : []
+          folders != null ? folders.map((folder) => folder.name) : []
       }
     },
-    initializationFailedHandler: error => {
+    initializationFailedHandler: (error) => {
       client.error('Server initialization failed.', error)
       client.outputChannel.show(true)
       return false
@@ -483,11 +525,16 @@ export function realActivate (context: ExtensionContext): void {
           }
           const result: Array<TextDocumentSettings | null> = []
           for (const item of params.items) {
-            if ((item?.section != null && item.section.length > 0) || item.scopeUri?.length === 0) {
+            if (
+              (item?.section != null && item.section.length > 0) ||
+              item.scopeUri?.length === 0
+            ) {
               result.push(null)
               continue
             }
-            const resource = client.protocol2CodeConverter.asUri(item.scopeUri as string)
+            const resource = client.protocol2CodeConverter.asUri(
+              item.scopeUri as string
+            )
             const config = Workspace.getConfiguration('standard', resource)
             const settings: TextDocumentSettings = {
               validate: false,
@@ -541,9 +588,10 @@ export function realActivate (context: ExtensionContext): void {
                 index: workspaceFolder.index
               }
             }
-            const workingDirectories = config.get<
-            Array<string | DirectoryItem.DirectoryItem>
-            >('workingDirectories')
+            const workingDirectories =
+              config.get<Array<string | DirectoryItem.DirectoryItem>>(
+                'workingDirectories'
+              )
             if (Array.isArray(workingDirectories)) {
               let workingDirectory
               const workspaceFolderPath =
@@ -557,7 +605,8 @@ export function realActivate (context: ExtensionContext): void {
                   directory = entry
                 } else if (DirectoryItem.is(entry)) {
                   directory = entry.directory
-                  changeProcessCWD = entry.changeProcessCWD != null ? changeProcessCWD : false
+                  changeProcessCWD =
+                    entry.changeProcessCWD != null ? changeProcessCWD : false
                 }
                 if (directory != null) {
                   if (
@@ -605,7 +654,7 @@ export function realActivate (context: ExtensionContext): void {
   defaultErrorHandler = client.createDefaultErrorHandler()
   const running = `${linterName} server is running.`
   const stopped = `${linterName} server stopped.`
-  client.onDidChangeState(event => {
+  client.onDidChangeState((event) => {
     if (event.newState === ClientState.Running) {
       client.info(running)
       statusBarItem.tooltip = running
@@ -620,14 +669,16 @@ export function realActivate (context: ExtensionContext): void {
   client
     .onReady()
     .then(() => {
-      client.onNotification(StatusNotification.type, params => {
+      client.onNotification(StatusNotification.type, (params) => {
         updateStatus(params.state)
       })
 
       client.onNotification(exitCalled, (async (params: any) => {
         serverCalledProcessExit = true
         client.error(
-          `Server process exited with code ${params[0] as string}. This usually indicates a misconfigured ${linterName} setup.`,
+          `Server process exited with code ${
+            params[0] as string
+          }. This usually indicates a misconfigured ${linterName} setup.`,
           params[1]
         )
         await Window.showErrorMessage(
@@ -635,7 +686,7 @@ export function realActivate (context: ExtensionContext): void {
         )
       }) as unknown as () => void)
 
-      client.onRequest(NoStandardLibraryRequest.type, async params => {
+      client.onRequest(NoStandardLibraryRequest.type, async (params) => {
         const key = 'noStandardMessageShown'
         const state = context.globalState.get<NoStandardState>(key, {})
         const uri = URI.parse(params.source.uri)
@@ -657,7 +708,10 @@ export function realActivate (context: ExtensionContext): void {
           if (state.workspaces == null) {
             state.workspaces = Object.create(null)
           }
-          if (state.workspaces != null && !state.workspaces[workspaceFolder.uri.toString()]) {
+          if (
+            state.workspaces != null &&
+            !state.workspaces[workspaceFolder.uri.toString()]
+          ) {
             state.workspaces[workspaceFolder.uri.toString()] = true
             client.outputChannel.show(true)
             await context.globalState.update(key, state)
@@ -682,7 +736,7 @@ export function realActivate (context: ExtensionContext): void {
     .catch(() => {})
 
   if (dummyCommands != null) {
-    dummyCommands.forEach(command => command.dispose())
+    dummyCommands.forEach((command) => command.dispose())
     dummyCommands = null
   }
   context.subscriptions.push(
@@ -717,6 +771,6 @@ export function realActivate (context: ExtensionContext): void {
 
 export function deactivate (): void {
   if (dummyCommands != null) {
-    dummyCommands.forEach(command => command.dispose())
+    dummyCommands.forEach((command) => command.dispose())
   }
 }

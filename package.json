@@ -2,7 +2,7 @@
   "name": "vscode-standard",
   "displayName": "StandardJS - JavaScript Standard Style",
   "description": "Visual Studio Code extension for JavaScript Standard Style with automatic fixing.",
-  "version": "1.5.1",
+  "version": "2.0.0",
   "author": "Standard",
   "license": "MIT",
   "repository": {
@@ -43,6 +43,12 @@
           "type": "boolean",
           "default": true,
           "description": "Controls whether JavaScript Standard Style is enabled for JavaScript files or not."
+        },
+        "standard.enableGlobally": {
+          "scope": "resource",
+          "type": "boolean",
+          "default": false,
+          "description": "Controls whether JavaScript Standard Style is enabled globally for JavaScript files or not."
         },
         "standard.nodePath": {
           "scope": "resource",
@@ -161,7 +167,7 @@
         },
         "standard.usePackageJson": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Activate JavaScript Standard Style based on project's package.json settings, use globally installed standard module if set to \"false\""
         },
         "standard.treatErrorsAsWarnings": {
