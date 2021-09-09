@@ -15,34 +15,39 @@
 
 ## How to use
 
-1. **Install the 'JavaScript Standard Style' extension**
+1. **Install the 'StandardJS - JavaScript Standard Style' extension**
 
-   If you don't know how to install extensions in VSCode, take a look at the [documentation](https://code.visualstudio.com/docs/editor/extension-gallery#_browse-and-install-extensions).
+   Launch VSCode Quick Open (⌘+P), paste the following command, and press enter.
 
-   You will need to reload VSCode before new extensions can be used.
+   ```text
+   ext install standard.vscode-standard
+   ```
 
-2. **Install `standard`, `semistandard`, `standardx` or `ts-standard`**
+   For more information, take a look at the [documentation](https://code.visualstudio.com/docs/editor/extension-gallery#_browse-and-install-extensions).
+
+2. **Install the engine `standard`, `semistandard`, `standardx` or `ts-standard`**
 
    This can be done globally or locally. We recommend that you install them locally (i.e. saved in your project's `devDependencies`), to ensure that other developers have it installed when working on the project.
 
-3. **Disable the built-in VSCode validator**
+3. **Enable the extension**
 
-   To do this, set `"javascript.validate.enable": false` in your VSCode `settings.json`.
+   That's it! The extension will automatically be enabled in projects that has one of the engines installed in `devDependencies` in `package.json`.
 
-## Plugin options
+## Extension options
 
-We give you some options to customize vscode-standard in your VSCode [`settings.json`](https://code.visualstudio.com/docs/getstarted/settings).
+We give you some options to customize `vscode-standard` in your VSCode [`settings.json`](https://code.visualstudio.com/docs/getstarted/settings).
 
 | Option                           | Description                                                                                                                                                                                                  | Default                                                             |
 | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
 | `standard.enable`                | enable or disable JavaScript Standard Style                                                                                                                                                                  | `true`                                                              |
+| `standard.enableGlobally`        | enable or disable JavaScript Standard Style globally                                                                                                                                                         | `false`                                                             |
 | `standard.run`                   | run linter `onSave` or `onType`                                                                                                                                                                              | `onType`                                                            |
 | `standard.autoFixOnSave`         | enable or disable auto fix on save. It is only available when VSCode's `files.autoSave` is either `off`, `onFocusChange` or `onWindowChange`. It will not work with `afterDelay`.                            | `false`                                                             |
 | `standard.nodePath`              | use this setting if an installed `standard` package can't be detected.                                                                                                                                       | `null`                                                              |
 | `standard.validate`              | an array of language identifiers specify the files to be validated                                                                                                                                           | `["javascript", "javascriptreact", "typescript", "typescriptreact]` |
 | `standard.workingDirectories`    | an array for working directories to be used.                                                                                                                                                                 | `[]`                                                                |
 | `standard.engine`                | You can use `semistandard`, `standardx` or `ts-standard` instead of `standard`. **Just make sure you've installed the `semistandard`, the `standardx` or the `ts-standard` package, instead of `standard`.** | `standard`                                                          |
-| `standard.usePackageJson`        | if set to `true`, JavaScript Standard Style will use project's `package.json` settings, otherwise globally installed `standard` module is used                                                               | `false`                                                             |
+| `standard.usePackageJson`        | if set to `true`, JavaScript Standard Style will use project's `package.json` settings, otherwise globally installed `standard` module is used                                                               | `true`                                                              |
 | `standard.treatErrorsAsWarnings` | Any linting error reported by Standard will instead be displayed as a warning within VS Code.                                                                                                                | `false`                                                             |
 
 ## Configuring Standard
