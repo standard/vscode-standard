@@ -127,10 +127,10 @@ When you open the Command Palette in VSCode (⇧⌘P or Ctrl+Shift+P), this plug
 ## How to develop
 
 1. Fork this repo, and clone your fork locally.
-2. Run `npm install` right under project root.
+2. Run `npm install` right under project root and `/client` and `/server`.
 3. Open project in VSCode. The plugin should be disabled whilst developing.
 4. Run the `watch` build task (⇧⌘B or Ctrl+Shift+B) to compile the client and server.
-5. To run/debug the extension, use the `Launch Extension` launch configuration (from the VSCode debug panel).
+5. To run/debug the extension, use the `Launch Client` launch configuration (from the VSCode debug panel).
 6. To debug the server, use the `Attach to Server` launch configuration.
 
 ## How to package
