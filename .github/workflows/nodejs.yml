@@ -11,18 +11,13 @@ on:
 jobs:
   ci:
     runs-on: 'ubuntu-latest'
-
-    strategy:
-      matrix:
-        node-version: ['lts/*']
-
     steps:
       - uses: 'actions/checkout@v2.3.4'
 
-      - name: Use Node.js ${{ matrix.node-version }}
+      - name: 'Use Node.js'
         uses: 'actions/setup-node@v2.4.0'
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 'lts/*'
 
       - name: 'Install dependencies'
         run: 'npm install'
