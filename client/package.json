@@ -24,16 +24,15 @@
     ]
   },
   "scripts": {
-    "lint": "ts-standard | snazzy",
-    "format": "ts-standard --fix | snazzy"
+    "lint": "ts-standard"
   },
   "devDependencies": {
+    "@types/glob": "^7.1.4",
     "vscode-languageclient": "^7.0.0",
     "vscode-nls": "^5.0.0"
   },
   "dependencies": {
     "@types/vscode": "^1.60.0",
-    "snazzy": "file:../node_modules/snazzy",
     "ts-standard": "file:../node_modules/ts-standard",
     "vscode-uri": "^3.0.2"
   }

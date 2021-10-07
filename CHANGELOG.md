@@ -10,6 +10,7 @@ Now the extension will be automatically be enabled in projects that has one of t
 **Note 2**: If you still want to enable the extension globally you can set the new option : `"standard.enableGlobally": true` (by default it is set to `false`).
 
 **BREAKING CHANGE**: This feature changed the default settings, before: `"standard.usePackageJson": false`, after: `"standard.usePackageJson": true`
+
 **BREAKING CHANGE**: By default (if you don't set `"standard.enableGlobally": true`), the extension will not lint your files if you haven't got a `package.json` containing one of the engines installed in `devDependencies`.
 
 ## 1.5.1

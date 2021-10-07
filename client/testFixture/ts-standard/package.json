@@ -1,0 +1,19 @@
+{
+  "name": "fixture",
+  "ts-standard": {
+    "files": [
+      "./src/**/*.ts"
+    ],
+    "envs": [
+      "node"
+    ]
+  },
+  "scripts": {
+    "lint": "ts-standard"
+  },
+  "devDependencies": {
+    "ts-standard": "*",
+    "typescript": "*",
+    "@types/node": "*"
+  }
+}

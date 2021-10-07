@@ -210,13 +210,17 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -b",
     "watch": "tsc -b -w",
+    "test": "npm run compile && sh ./scripts/e2e.sh",
     "postinstall": "cd client && npm install && cd ../server && npm install && cd ..",
     "package": "vsce package",
     "lint": "cd client && npm run lint && cd ../server && npm run lint && cd ..",
     "format": "cd client && npm run format && cd ../server && npm run format && cd .."
   },
   "devDependencies": {
+    "@types/mocha": "^9.0.0",
     "@types/node": "^16.10.3",
+    "@vscode/test-electron": "^1.6.2",
+    "mocha": "^9.1.2",
     "snazzy": "^9.0.0",
     "ts-standard": "^10.0.0",
     "typescript": "^4.4.3",

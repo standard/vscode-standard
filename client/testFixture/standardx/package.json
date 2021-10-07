@@ -1,0 +1,17 @@
+{
+  "name": "fixture",
+  "eslintConfig": {
+    "rules": {
+      "semi": [
+        "error",
+        "always"
+      ]
+    }
+  },
+  "scripts": {
+    "lint": "standardx"
+  },
+  "devDependencies": {
+    "standardx": "*"
+  }
+}
