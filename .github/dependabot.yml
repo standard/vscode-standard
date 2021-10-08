@@ -2,17 +2,12 @@
 
 version: 2
 updates:
-  - package-ecosystem: 'npm'
+  - package-ecosystem: 'github-actions'
     directory: '/'
     schedule:
       interval: 'daily'
 
   - package-ecosystem: 'npm'
-    directory: '/client'
-    schedule:
-      interval: 'daily'
-
-  - package-ecosystem: 'npm'
-    directory: '/server'
+    directory: '/'
     schedule:
       interval: 'daily'

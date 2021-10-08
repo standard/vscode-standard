@@ -41,13 +41,7 @@ import * as Is from './utils/Is'
 import * as NoStandardLibraryRequest from './utils/NoStandardLibraryRequest'
 import * as StatusNotification from './utils/StatusNotification'
 import * as ValidateItem from './utils/ValidateItem'
-
-const linterValues = [
-  'standard',
-  'semistandard',
-  'standardx',
-  'ts-standard'
-] as const
+import { linterValues } from './linterValues'
 
 type LinterValues = typeof linterValues[number]
 type LinterNameValues =

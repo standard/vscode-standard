@@ -1,0 +1,9 @@
+{
+  "name": "fixture",
+  "scripts": {
+    "lint": "standard"
+  },
+  "devDependencies": {
+    "standard": "*"
+  }
+}
