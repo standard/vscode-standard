@@ -2,7 +2,7 @@
   "name": "vscode-standard",
   "displayName": "StandardJS - JavaScript Standard Style",
   "description": "Visual Studio Code extension for JavaScript Standard Style with automatic fixing.",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": "Standard",
   "license": "MIT",
   "repository": {
