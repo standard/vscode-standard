@@ -354,7 +354,7 @@ async function resolveSettings (
           } else if (pkg?.devDependencies?.standardx != null) {
             linter = 'standardx'
             linterName = 'JavaScript Standard Style with custom tweaks'
-          } else if (pkg?.devDependencies['ts-standard'] != null) {
+          } else if (pkg?.devDependencies?.['ts-standard'] != null) {
             linter = 'ts-standard'
             linterName = 'TypeScript Standard Style'
           }
@@ -363,7 +363,7 @@ async function resolveSettings (
             pkg?.devDependencies?.standard != null ||
             pkg?.devDependencies?.semistandard != null ||
             pkg?.devDependencies?.standardx != null ||
-            pkg?.devDependencies['ts-standard'] != null
+            pkg?.devDependencies?.['ts-standard'] != null
           ) {
             if (pkg[linter] != null) {
               // if [linter] presented in package.json combine the global one.
