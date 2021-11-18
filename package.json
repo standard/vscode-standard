@@ -223,7 +223,7 @@
     "mocha": "^9.1.3",
     "snazzy": "^9.0.0",
     "ts-standard": "^10.0.0",
-    "typescript": "^4.4.4",
+    "typescript": "^4.5.2",
     "vsce": "^2.3.0"
   },
   "dependencies": {
