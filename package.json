@@ -227,6 +227,6 @@
     "vsce": "^2.6.3"
   },
   "dependencies": {
-    "async": "^3.2.2"
+    "async": "^3.2.3"
   }
 }
