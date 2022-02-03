@@ -919,11 +919,10 @@ function validate (
     if (settings.library != null) {
       newOptions.filename = file
 
-      const optionsParser = isLegacyModule(settings.library)
-        ? settings.library.parseOpts
-        : settings.library.resolveEslintConfig
+      var opts = isLegacyModule(settings.library)
+        ? settings.library.parseOpts(newOptions)
+        : settings.library.resolveEslintConfig(newOptions)
 
-      var opts = optionsParser(newOptions)
       var deglobOpts = {
         ignore: opts.ignore,
         cwd: opts.cwd,
