@@ -125,13 +125,25 @@ interface Opts {
   cwd?: string
   filename?: string
 }
-interface StandardModule {
+interface StandardLegacyModule {
   lintText: (
     text: string,
     opts?: CLIOptions,
     cb?: StandardModuleCallback
   ) => void
   parseOpts: (opts: Object) => Opts
+}
+interface Standard17Module{
+  lintText: (
+    text: string,
+    opts?: CLIOptions,
+  ) => Promise<StanardReport>
+  resolveEslintConfig: (opts: Object) => Opts
+}
+type StandardModule = StandardLegacyModule | Standard17Module
+
+function isLegacyModule (module: StandardModule): module is StandardLegacyModule {
+  return 'parseOpts' in module
 }
 
 function makeDiagnostic (
@@ -410,10 +422,10 @@ async function resolveSettings (
         )
       }
       return await promise.then(
-        path => {
+        async path => {
           let library = path2Library.get(path)
           if (library == null) {
-            library = require(path)
+            library = (await Function(`return import('file://${path}')`)()).default
             if (library?.lintText == null) {
               settings.validate = false
               connection.console.error(
@@ -906,7 +918,12 @@ function validate (
     }
     if (settings.library != null) {
       newOptions.filename = file
-      var opts = settings.library.parseOpts(newOptions)
+
+      const optionsParser = isLegacyModule(settings.library)
+        ? settings.library.parseOpts
+        : settings.library.resolveEslintConfig
+
+      var opts = optionsParser(newOptions)
       var deglobOpts = {
         ignore: opts.ignore,
         cwd: opts.cwd,
@@ -943,41 +960,53 @@ function validate (
         },
         function (callback: any) {
           if (settings.library != null) {
-            settings.library.lintText(content, newOptions, function (
-              error,
-              report
-            ) {
-              if (error != null) {
-                tryHandleMissingModule(error, document, settings.library)
-                return callback(error)
-              }
-              return callback(null, report)
-            })
-          }
-        },
-        function (report: StanardReport, callback: any) {
-          const diagnostics: Diagnostic[] = []
-          if (
-            report?.results != null &&
-            Array.isArray(report.results) &&
-            report.results.length > 0
-          ) {
-            const docReport = report.results[0]
-            if (
-              docReport.messages != null &&
-              Array.isArray(docReport.messages)
-            ) {
-              docReport.messages.forEach(problem => {
-                if (problem != null) {
-                  const diagnostic = makeDiagnostic(problem, settings)
-                  diagnostics.push(diagnostic)
-                  if (settings.autoFix) {
-                    recordCodeAction(document, diagnostic, problem)
-                  }
+            if (isLegacyModule(settings.library)) {
+              settings.library.lintText(content, newOptions, function (
+                error,
+                report
+              ) {
+                if (error != null) {
+                  tryHandleMissingModule(error, document, settings.library)
+                  return callback(error)
                 }
+                return callback(null, report)
               })
+            } else {
+              settings.library.lintText(content, newOptions)
+                .then(report => callback(null, report))
+                .catch(error => {
+                  tryHandleMissingModule(error, document, settings.library)
+                  callback(error)
+                })
             }
           }
+        },
+        function (report: StanardReport | StandardDocumentReport[], callback: any) {
+          const diagnostics: Diagnostic[] = []
+          if (report != null) {
+            const results = Array.isArray(report) ? report : report.results
+            if (
+              Array.isArray(results) &&
+              results.length > 0
+            ) {
+              const docReport = results[0]
+              if (
+                docReport.messages != null &&
+                Array.isArray(docReport.messages)
+              ) {
+                docReport.messages.forEach(problem => {
+                  if (problem != null) {
+                    const diagnostic = makeDiagnostic(problem, settings)
+                    diagnostics.push(diagnostic)
+                    if (settings.autoFix) {
+                      recordCodeAction(document, diagnostic, problem)
+                    }
+                  }
+                })
+              }
+            }
+          }
+
           if (publishDiagnostics) {
             connection.sendDiagnostics({ uri, diagnostics })
           }
