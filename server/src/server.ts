@@ -425,7 +425,7 @@ async function resolveSettings (
         async path => {
           let library = path2Library.get(path)
           if (library == null) {
-            library = (await Function(`return import('file://${path}')`)()).default
+            library = (await Function(`return import('file://${path.replace(/\\/g, '\\\\')}')`)()).default
             if (library?.lintText == null) {
               settings.validate = false
               connection.console.error(
