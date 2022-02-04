@@ -425,7 +425,7 @@ async function resolveSettings (
         async path => {
           let library = path2Library.get(path)
           if (library == null) {
-            // eslint-disable-next-line @typescript-eslint/no-no-new-func @typescript-eslint/no-implied-eval
+            // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
             library = (await Function(`return import('file://${path.replace(/\\/g, '\\\\')}')`)()).default
             if (library?.lintText == null) {
               settings.validate = false
