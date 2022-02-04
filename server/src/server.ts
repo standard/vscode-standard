@@ -425,6 +425,7 @@ async function resolveSettings (
         async path => {
           let library = path2Library.get(path)
           if (library == null) {
+            // eslint-disable-next-line @typescript-eslint/no-no-new-func @typescript-eslint/no-implied-eval
             library = (await Function(`return import('file://${path.replace(/\\/g, '\\\\')}')`)()).default
             if (library?.lintText == null) {
               settings.validate = false
@@ -916,14 +917,15 @@ function validate (
         }
       }
     }
+    let deglobOpts: any = {}
+    let opts: any = {}
     if (settings.library != null) {
       newOptions.filename = file
-
-      var opts = isLegacyModule(settings.library)
+      opts = isLegacyModule(settings.library)
         ? settings.library.parseOpts(newOptions)
         : settings.library.resolveEslintConfig(newOptions)
 
-      var deglobOpts = {
+      deglobOpts = {
         ignore: opts.ignore,
         cwd: opts.cwd,
         configKey: settings.engine
@@ -1173,11 +1175,11 @@ function showErrorMessage (
 
 messageQueue.registerNotification(
   DidChangeWatchedFilesNotification.type,
-  params => {
+  (async (params: any) => {
     // A .eslintrc has change. No smartness here. Simply revalidate all files.
     noConfigReported = Object.create(null)
     missingModuleReported = Object.create(null)
-    params.changes.forEach((change: any) => {
+    for (const change of params.changes) {
       const fsPath = getFilePath(change.uri)
       if (fsPath.length === 0 || isUNC(fsPath)) {
         return undefined
@@ -1187,14 +1189,14 @@ messageQueue.registerNotification(
         const library = configErrorReported.get(fsPath)
         if (library != null) {
           try {
-            library.lintText('')
+            await library.lintText('')
             configErrorReported.delete(fsPath)
           } catch (error) {}
         }
       }
-    })
+    }
     validateMany(documents.all())
-  }
+  }) as unknown as () => void
 )
 
 class Fixes {
