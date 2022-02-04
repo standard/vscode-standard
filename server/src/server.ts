@@ -959,25 +959,26 @@ function validate (
         },
         function (callback: any) {
           if (settings.library != null) {
-            if (isLegacyModule(settings.library)) {
-              settings.library.lintText(content, newOptions, function (
-                error,
-                report
-              ) {
-                if (error != null) {
-                  tryHandleMissingModule(error, document, settings.library)
-                  return callback(error)
-                }
-                return callback(null, report)
-              })
-            } else {
+            if (!isLegacyModule(settings.library)) {
               settings.library.lintText(content, newOptions)
                 .then(report => callback(null, report))
                 .catch(error => {
                   tryHandleMissingModule(error, document, settings.library)
                   callback(error)
                 })
+              return
             }
+
+            settings.library.lintText(content, newOptions, function (
+              error,
+              report
+            ) {
+              if (error != null) {
+                tryHandleMissingModule(error, document, settings.library)
+                return callback(error)
+              }
+              return callback(null, report)
+            })
           }
         },
         function (report: StanardReport | StandardDocumentReport[], callback: any) {
