@@ -12,6 +12,6 @@
     "lint": "standardx"
   },
   "devDependencies": {
-    "standardx": "*"
+    "standardx": "latest"
   }
 }
