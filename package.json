@@ -2,7 +2,7 @@
   "name": "vscode-standard",
   "displayName": "StandardJS - JavaScript Standard Style",
   "description": "Visual Studio Code extension for JavaScript Standard Style with automatic fixing.",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "author": "Standard",
   "license": "MIT",
   "repository": {
@@ -218,13 +218,13 @@
   },
   "devDependencies": {
     "@types/mocha": "^9.1.0",
-    "@types/node": "^17.0.14",
-    "@vscode/test-electron": "^2.1.1",
+    "@types/node": "^17.0.15",
+    "@vscode/test-electron": "^2.1.2",
     "mocha": "^9.2.0",
     "snazzy": "^9.0.0",
     "ts-standard": "^11.0.0",
     "typescript": "^4.5.5",
-    "vsce": "^2.6.6"
+    "vsce": "^2.6.7"
   },
   "dependencies": {
     "async": "^3.2.3"

@@ -25,11 +25,11 @@
     "deglob": "^4.0.1",
     "vscode-languageserver": "^7.0.0",
     "vscode-languageserver-protocol": "^3.16.0",
-    "vscode-languageserver-textdocument": "^1.0.1",
-    "vscode-uri": "^3.0.2"
+    "vscode-languageserver-textdocument": "^1.0.4",
+    "vscode-uri": "^3.0.3"
   },
   "devDependencies": {
-    "@types/async": "^3.2.8",
+    "@types/async": "^3.2.12",
     "@types/deglob": "^2.1.2",
     "ts-standard": "file:../node_modules/ts-standard"
   },
