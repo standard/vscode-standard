@@ -125,13 +125,25 @@ interface Opts {
   cwd?: string
   filename?: string
 }
-interface StandardModule {
+interface StandardLegacyModule {
   lintText: (
     text: string,
     opts?: CLIOptions,
     cb?: StandardModuleCallback
   ) => void
   parseOpts: (opts: Object) => Opts
+}
+interface Standard17Module{
+  lintText: (
+    text: string,
+    opts?: CLIOptions,
+  ) => Promise<StanardReport>
+  resolveEslintConfig: (opts: Object) => Opts
+}
+type StandardModule = StandardLegacyModule | Standard17Module
+
+function isLegacyModule (module: StandardModule): module is StandardLegacyModule {
+  return 'parseOpts' in module
 }
 
 function makeDiagnostic (
@@ -410,10 +422,11 @@ async function resolveSettings (
         )
       }
       return await promise.then(
-        path => {
+        async path => {
           let library = path2Library.get(path)
           if (library == null) {
-            library = require(path)
+            // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
+            library = (await Function(`return import('file://${path.replace(/\\/g, '\\\\')}')`)()).default
             if (library?.lintText == null) {
               settings.validate = false
               connection.console.error(
@@ -904,10 +917,15 @@ function validate (
         }
       }
     }
+    let deglobOpts: any = {}
+    let opts: any = {}
     if (settings.library != null) {
       newOptions.filename = file
-      var opts = settings.library.parseOpts(newOptions)
-      var deglobOpts = {
+      opts = isLegacyModule(settings.library)
+        ? settings.library.parseOpts(newOptions)
+        : settings.library.resolveEslintConfig(newOptions)
+
+      deglobOpts = {
         ignore: opts.ignore,
         cwd: opts.cwd,
         configKey: settings.engine
@@ -943,6 +961,16 @@ function validate (
         },
         function (callback: any) {
           if (settings.library != null) {
+            if (!isLegacyModule(settings.library)) {
+              settings.library.lintText(content, newOptions)
+                .then(report => callback(null, report))
+                .catch(error => {
+                  tryHandleMissingModule(error, document, settings.library)
+                  callback(error)
+                })
+              return
+            }
+
             settings.library.lintText(content, newOptions, function (
               error,
               report
@@ -955,29 +983,32 @@ function validate (
             })
           }
         },
-        function (report: StanardReport, callback: any) {
+        function (report: StanardReport | StandardDocumentReport[], callback: any) {
           const diagnostics: Diagnostic[] = []
-          if (
-            report?.results != null &&
-            Array.isArray(report.results) &&
-            report.results.length > 0
-          ) {
-            const docReport = report.results[0]
+          if (report != null) {
+            const results = Array.isArray(report) ? report : report.results
             if (
-              docReport.messages != null &&
-              Array.isArray(docReport.messages)
+              Array.isArray(results) &&
+              results.length > 0
             ) {
-              docReport.messages.forEach(problem => {
-                if (problem != null) {
-                  const diagnostic = makeDiagnostic(problem, settings)
-                  diagnostics.push(diagnostic)
-                  if (settings.autoFix) {
-                    recordCodeAction(document, diagnostic, problem)
+              const docReport = results[0]
+              if (
+                docReport.messages != null &&
+                Array.isArray(docReport.messages)
+              ) {
+                docReport.messages.forEach(problem => {
+                  if (problem != null) {
+                    const diagnostic = makeDiagnostic(problem, settings)
+                    diagnostics.push(diagnostic)
+                    if (settings.autoFix) {
+                      recordCodeAction(document, diagnostic, problem)
+                    }
                   }
-                }
-              })
+                })
+              }
             }
           }
+
           if (publishDiagnostics) {
             connection.sendDiagnostics({ uri, diagnostics })
           }
@@ -1144,11 +1175,11 @@ function showErrorMessage (
 
 messageQueue.registerNotification(
   DidChangeWatchedFilesNotification.type,
-  params => {
+  (async (params: any) => {
     // A .eslintrc has change. No smartness here. Simply revalidate all files.
     noConfigReported = Object.create(null)
     missingModuleReported = Object.create(null)
-    params.changes.forEach((change: any) => {
+    for (const change of params.changes) {
       const fsPath = getFilePath(change.uri)
       if (fsPath.length === 0 || isUNC(fsPath)) {
         return undefined
@@ -1158,14 +1189,14 @@ messageQueue.registerNotification(
         const library = configErrorReported.get(fsPath)
         if (library != null) {
           try {
-            library.lintText('')
+            await library.lintText('')
             configErrorReported.delete(fsPath)
           } catch (error) {}
         }
       }
-    })
+    }
     validateMany(documents.all())
-  }
+  }) as unknown as () => void
 )
 
 class Fixes {

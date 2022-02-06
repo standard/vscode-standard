@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.0
+
+- **Feature**: Add support for `standard-engine@15` ([#376](https://github.com/standard/vscode-standard/pull/376))
+
 ## 2.0.1
 
 - **Fix**: Crash if a `package.json` file does not have a `devDependencies` property. ([#310](https://github.com/standard/vscode-standard/pull/310))

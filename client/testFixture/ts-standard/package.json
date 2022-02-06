@@ -12,8 +12,8 @@
     "lint": "ts-standard"
   },
   "devDependencies": {
-    "ts-standard": "*",
-    "typescript": "*",
-    "@types/node": "*"
+    "ts-standard": "latest",
+    "typescript": "latest",
+    "@types/node": "latest"
   }
 }

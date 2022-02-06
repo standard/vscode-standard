@@ -4,6 +4,6 @@
     "lint": "standard"
   },
   "devDependencies": {
-    "standard": "*"
+    "standard": "^17.0.0-2"
   }
 }

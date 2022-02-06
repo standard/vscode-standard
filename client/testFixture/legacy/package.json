@@ -1,9 +1,9 @@
 {
   "name": "fixture",
   "scripts": {
-    "lint": "semistandard"
+    "lint": "standard"
   },
   "devDependencies": {
-    "semistandard": "latest"
+    "standard": "^16.0.0"
   }
 }
