@@ -32,7 +32,7 @@
     "vscode-nls": "^5.0.0"
   },
   "dependencies": {
-    "@types/vscode": "^1.64.0",
+    "@types/vscode": "^1.66.0",
     "ts-standard": "file:../node_modules/ts-standard",
     "vscode-uri": "^3.0.3"
   }
