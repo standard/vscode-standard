@@ -224,7 +224,7 @@
     "snazzy": "^9.0.0",
     "ts-standard": "^11.0.0",
     "typescript": "^4.6.3",
-    "vsce": "^2.7.0"
+    "vsce": "^2.9.3"
   },
   "dependencies": {
     "async": "^3.2.3"
