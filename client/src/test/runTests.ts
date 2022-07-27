@@ -44,7 +44,7 @@ async function main (): Promise<void> {
     process.chdir(testWorkspace)
     await execShellCommand('npm install')
     await runTests({
-      version: '1.65.0',
+      version: 'stable',
       extensionDevelopmentPath,
       extensionTestsPath,
       launchArgs: [testWorkspace, '--disable-extensions']
