@@ -18,11 +18,12 @@ import {
 } from 'vscode'
 import {
   CloseAction,
+  CloseHandlerResult,
   DidCloseTextDocumentNotification,
   DidOpenTextDocumentNotification,
   DocumentFilter,
-  ErrorAction,
   ErrorHandler,
+  ErrorHandlerResult,
   ExecuteCommandParams,
   ExecuteCommandRequest,
   LanguageClient,
@@ -384,11 +385,11 @@ export function realActivate (context: ExtensionContext): void {
   TextDocument
   >()
 
-  Workspace.onDidChangeConfiguration(() => {
+  Workspace.onDidChangeConfiguration(async () => {
     for (const textDocument of syncedDocuments.values()) {
       if (!shouldBeValidated(textDocument)) {
         syncedDocuments.delete(textDocument.uri.toString())
-        client.sendNotification(
+        await client.sendNotification(
           DidCloseTextDocumentNotification.type,
           client.code2ProtocolConverter.asCloseTextDocumentParams(textDocument)
         )
@@ -399,7 +400,7 @@ export function realActivate (context: ExtensionContext): void {
         !syncedDocuments.has(textDocument.uri.toString()) &&
         shouldBeValidated(textDocument)
       ) {
-        client.sendNotification(
+        await client.sendNotification(
           DidOpenTextDocumentNotification.type,
           client.code2ProtocolConverter.asOpenTextDocumentParams(textDocument)
         )
@@ -441,34 +442,36 @@ export function realActivate (context: ExtensionContext): void {
       return false
     },
     errorHandler: {
-      error: (error, message, count): ErrorAction => {
-        return defaultErrorHandler?.error(error, message, count) as ErrorAction
+      error: (error, message, count): ErrorHandlerResult => {
+        return defaultErrorHandler?.error(error, message, count) as ErrorHandlerResult
       },
-      closed: (): CloseAction => {
+      closed: (): CloseHandlerResult => {
         if (serverCalledProcessExit) {
-          return CloseAction.DoNotRestart
+          return {
+            action: CloseAction.DoNotRestart
+          }
         }
-        return defaultErrorHandler?.closed() as CloseAction
+        return defaultErrorHandler?.closed() as CloseHandlerResult
       }
     },
     middleware: {
-      didOpen: (document, next) => {
+      didOpen: async (document, next) => {
         if (
           Languages.match(packageJsonFilter, document) >= 0 ||
           shouldBeValidated(document)
         ) {
-          next(document)
+          await next(document)
           syncedDocuments.set(document.uri.toString(), document)
         }
       },
-      didChange: (event, next) => {
+      didChange: async (event, next) => {
         if (syncedDocuments.has(event.document.uri.toString())) {
-          next(event)
+          await next(event)
         }
       },
-      willSave: (event, next) => {
+      willSave: async (event, next) => {
         if (syncedDocuments.has(event.document.uri.toString())) {
-          next(event)
+          await next(event)
         }
       },
       willSaveWaitUntil: (event, next) => {
@@ -478,16 +481,16 @@ export function realActivate (context: ExtensionContext): void {
           return Promise.resolve([])
         }
       },
-      didSave: (document, next) => {
+      didSave: async (document, next) => {
         if (syncedDocuments.has(document.uri.toString())) {
-          next(document)
+          await next(document)
         }
       },
-      didClose: (document, next) => {
+      didClose: async (document, next) => {
         const uri = document.uri.toString()
         if (syncedDocuments.has(uri)) {
           syncedDocuments.delete(uri)
-          next(document)
+          await next(document)
         }
       },
       provideCodeActions: (document, range, context, token, next) => {
@@ -661,7 +664,7 @@ export function realActivate (context: ExtensionContext): void {
     updateStatusBarVisibility(Window.activeTextEditor)
   })
   client
-    .onReady()
+    .start()
     .then(() => {
       client.onNotification(StatusNotification.type, (params) => {
         updateStatus(params.state)
@@ -734,7 +737,6 @@ export function realActivate (context: ExtensionContext): void {
     dummyCommands = null
   }
   context.subscriptions.push(
-    client.start(),
     Commands.registerCommand('standard.executeAutofix', () => {
       const textEditor = Window.activeTextEditor
       if (textEditor == null) {

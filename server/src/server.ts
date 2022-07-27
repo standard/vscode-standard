@@ -296,9 +296,11 @@ const nodeExit = process.exit
 process.on('SIGINT', () => {
   const stack = new Error('stack')
   connection.sendNotification(exitCalled, [0, stack.stack])
-  setTimeout(() => {
-    nodeExit(0)
-  }, 1000)
+    .finally(() => {
+      setTimeout(() => {
+        nodeExit(0)
+      }, 1000)
+    })
 })
 
 const connection = createConnection(
@@ -735,13 +737,13 @@ documents.onDidSave(async event => {
   )
 })
 
-documents.onDidClose(async event => {
+documents.onDidClose(async (event) => {
   const settings = await resolveSettings(event.document)
   const uri = event.document.uri
   document2Settings.delete(uri)
   codeActions.delete(uri)
   if (settings.validate) {
-    connection.sendDiagnostics({ uri: uri, diagnostics: [] })
+    await connection.sendDiagnostics({ uri: uri, diagnostics: [] })
   }
 })
 
@@ -829,13 +831,13 @@ function validateSingle (
   if (documents.get(document.uri) == null) {
     return Promise.resolve(undefined)
   }
-  return resolveSettings(document).then(settings => {
+  return resolveSettings(document).then(async (settings) => {
     if (!settings.validate) {
       return
     }
     try {
       validate(document, settings, publishDiagnostics)
-      connection.sendNotification(StatusNotification.type, {
+      await connection.sendNotification(StatusNotification.type, {
         state: StatusNotification.Status.ok
       })
     } catch (err) {
@@ -847,7 +849,7 @@ function validateSingle (
         }
       }
       status = status ?? StatusNotification.Status.error
-      connection.sendNotification(StatusNotification.type, { state: status })
+      await connection.sendNotification(StatusNotification.type, { state: status })
     }
   })
 }
@@ -991,7 +993,7 @@ function validate (
             })
           }
         },
-        function (report: StanardReport | StandardDocumentReport[], callback: any) {
+        async function (report: StanardReport | StandardDocumentReport[], callback: any) {
           const diagnostics: Diagnostic[] = []
           if (report != null) {
             const results = Array.isArray(report) ? report : report.results
@@ -1018,7 +1020,7 @@ function validate (
           }
 
           if (publishDiagnostics) {
-            connection.sendDiagnostics({ uri, diagnostics })
+            await connection.sendDiagnostics({ uri, diagnostics })
           }
           callback(null)
         }
