@@ -932,8 +932,16 @@ function validate (
       }
     }
 
-    // Detect brackets in filename.
-    file = file.replace(']', '[]]').replace('/[', '/[[]')
+    // Detect brackets in filename and folders;.
+    file = file.replace(/[[(.)\]]/ig, (match) => {
+      if (match === '[') {
+        return '[[]'
+      } else if (match === ']') {
+        return '[]]'
+      } else {
+        return match
+      }
+    })
 
     async.waterfall(
       [
