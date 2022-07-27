@@ -932,7 +932,7 @@ function validate (
       }
     }
 
-    // Detect brackets in filename and folders;.
+    // Detect brackets in filename and folders.
     file = file.replace(/[[(.)\]]/ig, (match) => {
       if (match === '[') {
         return '[[]'
