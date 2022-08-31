@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.2
+
+- **Fix**: Publishing issue on the VSCode Marketplace ([#444](https://github.com/standard/vscode-standard/issues/444))
+
 ## 2.1.1
 
 - **Fix**: Detect brackets in filename and **folders** ([#443](https://github.com/standard/vscode-standard/pull/443))
