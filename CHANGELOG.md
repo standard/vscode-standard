@@ -1,5 +1,9 @@
 # Changelog
 
+## 2.1.1
+
+- **Fix**: Detect brackets in filename and **folders** ([#443](https://github.com/standard/vscode-standard/pull/443))
+
 ## 2.1.0
 
 - **Feature**: Add support for `standard-engine@15` ([#376](https://github.com/standard/vscode-standard/pull/376))
