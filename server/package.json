@@ -14,10 +14,11 @@
     "node": "*"
   },
   "ts-standard": {
-    "files": [
-      "./src/**/*.ts"
+    "project": "./tsconfig.json",
+    "ignore": [
+      "out"
     ],
-    "envs": [
+    "env": [
       "node"
     ]
   },

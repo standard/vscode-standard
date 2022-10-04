@@ -23,11 +23,11 @@ jobs:
       - name: 'Install dependencies'
         run: 'npm install'
 
-      - name: 'Package the extension'
-        run: 'npm run package'
-
       - name: 'Lint'
         run: 'npm run lint'
+
+      - name: 'Package the extension'
+        run: 'npm run package'
 
       - name: 'Test'
         run: 'xvfb-run -a npm test'

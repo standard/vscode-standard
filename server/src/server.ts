@@ -133,7 +133,7 @@ interface StandardLegacyModule {
   ) => void
   parseOpts: (opts: Object) => Opts
 }
-interface Standard17Module{
+interface Standard17Module {
   lintText: (
     text: string,
     opts?: CLIOptions,
@@ -161,7 +161,7 @@ function makeDiagnostic (
   const endChar =
     problem.endColumn != null ? Math.max(0, problem.endColumn - 1) : startChar
   return {
-    message: message,
+    message,
     severity: settings.treatErrorsAsWarnings ? DiagnosticSeverity.Warning : convertSeverity(problem.severity),
     source: settings.engine,
     range: {
@@ -506,12 +506,12 @@ class BufferedMessageQueue {
       return await new Promise<R>((resolve, reject) => {
         this.queue.push({
           method: type.method,
-          params: params,
+          params,
           documentVersion:
             versionProvider != null ? versionProvider(params) : undefined,
-          resolve: resolve,
-          reject: reject,
-          token: token
+          resolve,
+          reject,
+          token
         })
         this.trigger()
       })
@@ -529,7 +529,7 @@ class BufferedMessageQueue {
         documentVersion:
           versionProvider != null ? versionProvider(params) : undefined,
         method: type.method,
-        params: params
+        params
       })
       this.trigger()
     })
@@ -743,7 +743,7 @@ documents.onDidClose(async (event) => {
   document2Settings.delete(uri)
   codeActions.delete(uri)
   if (settings.validate) {
-    await connection.sendDiagnostics({ uri: uri, diagnostics: [] })
+    await connection.sendDiagnostics({ uri, diagnostics: [] })
   }
 })
 
