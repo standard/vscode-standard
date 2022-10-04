@@ -1,10 +1,8 @@
 {
   "name": "fixture",
   "ts-standard": {
-    "files": [
-      "./src/**/*.ts"
-    ],
-    "envs": [
+    "project": "./tsconfig.json",
+    "env": [
       "node"
     ]
   },

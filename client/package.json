@@ -16,10 +16,12 @@
     "vscode": "^1.50.0"
   },
   "ts-standard": {
-    "files": [
-      "./src/**/*.ts"
+    "project": "./tsconfig.json",
+    "ignore": [
+      "testFixture",
+      "out"
     ],
-    "envs": [
+    "env": [
       "node"
     ]
   },
