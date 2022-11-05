@@ -427,8 +427,15 @@ async function resolveSettings (
         async path => {
           let library = path2Library.get(path)
           if (library == null) {
+            // Need to load the library dynamically, making sure CWD is temporarily
+            // set to the target workspace
+            const oldCwd = process.cwd()
+            if (settings.workspaceFolder != null) {
+              process.chdir(settings.workspaceFolder.uri.fsPath)
+            }
             // eslint-disable-next-line no-new-func, @typescript-eslint/no-implied-eval
             library = (await Function(`return import('file://${path.replace(/\\/g, '\\\\')}')`)()).default
+            process.chdir(oldCwd)
             if (library?.lintText == null) {
               settings.validate = false
               connection.console.error(
