@@ -1,5 +1,6 @@
 import * as path from 'path'
 import * as fs from 'fs'
+import { tmpdir } from 'os'
 import { exec } from 'child_process'
 import { runTests } from '@vscode/test-electron'
 
@@ -43,6 +44,7 @@ async function main (): Promise<void> {
     )
     process.chdir(testWorkspace)
     await execShellCommand('npm install')
+    process.chdir(tmpdir())
     await runTests({
       version: 'stable',
       extensionDevelopmentPath,
