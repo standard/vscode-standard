@@ -1000,7 +1000,7 @@ function validate (
             })
           }
         },
-        async function (report: StanardReport | StandardDocumentReport[], callback: any) {
+        function (report: StanardReport | StandardDocumentReport[], callback: any) {
           const diagnostics: Diagnostic[] = []
           if (report != null) {
             const results = Array.isArray(report) ? report : report.results
@@ -1027,7 +1027,7 @@ function validate (
           }
 
           if (publishDiagnostics) {
-            await connection.sendDiagnostics({ uri, diagnostics })
+            connection.sendDiagnostics({ uri, diagnostics }).catch(() => {})
           }
           callback(null)
         }

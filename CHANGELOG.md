@@ -1,5 +1,10 @@
 # Changelog
 
+## 2.1.3
+
+- **Fix**: "Unable to locate the project file" after upgrading `ts-standard` to v12 ([#494](https://github.com/standard/vscode-standard/pull/494))
+- **Fix**: "TypeError: callback is not a function" error message ([#465](https://github.com/standard/vscode-standard/issues/465))
+
 ## 2.1.2
 
 - **Fix**: Publishing issue on the VSCode Marketplace ([#444](https://github.com/standard/vscode-standard/issues/444))

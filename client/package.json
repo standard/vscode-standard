@@ -29,13 +29,13 @@
     "lint": "ts-standard"
   },
   "devDependencies": {
-    "@types/glob": "^7.2.0",
+    "@types/glob": "^8.0.0",
     "vscode-languageclient": "^8.0.2",
-    "vscode-nls": "^5.0.1"
+    "vscode-nls": "^5.2.0"
   },
   "dependencies": {
-    "@types/vscode": "^1.69.0",
+    "@types/vscode": "^1.73.0",
     "ts-standard": "file:../node_modules/ts-standard",
-    "vscode-uri": "^3.0.3"
+    "vscode-uri": "^3.0.6"
   }
 }
